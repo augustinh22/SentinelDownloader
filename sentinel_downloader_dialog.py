@@ -51,7 +51,7 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
         # self.user_lineEdit
         # self.hub_comboBox
         # self.sensor_comboBox
-        # self.sortBy_comboBox
+        # self.orderBy_comboBox
         # self.LLX_lineEdit
         # self.ULX_lineEdit
         # self.LLY_lineEdit
@@ -64,9 +64,8 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
         # self.s1Product_comboBox
         # self.cloudCover_enable
         # self.cloudCover_spinBox
-        # self.absOrbit_lineEdit
         # self.orbitDir_comboBox
-        # self.relOrbit_lineEdit
+        # self.orbit_lineEdit
         # self.ingestFrom_dateEdit
         # self.ingestTo_dateEdit
         # self.ingest_enable
@@ -76,7 +75,8 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
         # self.maxRecords_spinBox
         # self.results_tableWidget
         # self.btnTileSearch
-        # self.tileSearch_textBrowser
+        # self.lat_lineEdit
+        # self.lon_lineEdit
 
         #
         # Hide password.
@@ -92,7 +92,8 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
         # Disable tile query button and results window until tile entered.
         #
         self.btnTileSearch.setEnabled(False)
-        self.tileSearch_textBrowser.setEnabled(False)
+        self.s2Extract_checkBox.setEnabled(False)
+
         #
         # Enable tile center coordinate search button.
         #
@@ -102,6 +103,11 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
         # Add directory search functionality.
         #
         # self.writeDir_toolButton
+
+        #
+        # Adjust max records based on api hub.
+        #
+        self.hub_comboBox.currentIndexChanged.connect(self.adjust_maxRecords)
 
         #
         # Disable date, ingestion date and cloudcover options until enabled.
@@ -131,12 +137,40 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
         self.ingestTo_dateEdit.setDate(today)
         self.dateTo_dateEdit.setDate(today)
 
+        #
+        # Orbit type radio buttons -- set relative as default.
+        #
+        self.relOrbit_radioButton.setAutoExclusive(False);
+        self.relOrbit_radioButton.setChecked(True);
+        self.relOrbit_radioButton.setAutoExclusive(True);
+
+    def adjust_maxRecords(self):
+
+        """Adjusts the possible max values based on download hub."""
+
+        if self.hub_comboBox.currentText() == 'Dhus':
+            self.maxRecords_spinBox.setMaximum(10)
+            self.maxRecords_spinBox.setMinimum(1)
+            self.maxRecords_spinBox.setSingleStep(1)
+            self.maxRecords_spinBox.setValue(10)
+
+        elif self.hub_comboBox.currentText() == 'API Hub':
+            self.maxRecords_spinBox.setMaximum(100)
+            self.maxRecords_spinBox.setMinimum(1)
+            self.maxRecords_spinBox.setSingleStep(10)
+            self.maxRecords_spinBox.setValue(100)
+
+        else:
+            self.maxRecords_spinBox.setMaximum(100)
+            self.maxRecords_spinBox.setMinimum(1)
+            self.maxRecords_spinBox.setSingleStep(10)
+            self.maxRecords_spinBox.setValue(100)
 
 
     def enable_cloudcover(self):
 
-        '''This function toggles the max cloud cover input field and label
-            depending on whether the 'enable' checkbox has been checked.'''
+        """Toggles the max cloud cover input field and label depending
+            on whether the 'enable' checkbox has been checked."""
 
         if self.cloudCover_enable.isChecked() == True:
             self.cloudCover_spinBox.setEnabled(True)
@@ -149,8 +183,8 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
 
     def enable_date(self):
 
-        '''This function toggles sensing date input fields and labels
-            depending on whether the 'enable' checkbox has been checked.'''
+        """Toggles sensing date input fields and labels depending on whether
+            the 'enable' checkbox has been checked."""
 
         if self.date_enable.isChecked() == True:
             self.dateFrom_dateEdit.setEnabled(True)
@@ -167,8 +201,8 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
 
     def enable_ingest(self):
 
-        '''This function toggles ingestion date input fields and labels
-            depending on whether the 'enable' checkbox has been checked.'''
+        """Toggles ingestion date input fields and labels depending on whether
+            the 'enable' checkbox has been checked."""
 
         if self.ingest_enable.isChecked() == True:
             self.ingestFrom_dateEdit.setEnabled(True)
@@ -182,16 +216,14 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
             self.ingestFrom_label.setEnabled(False)
             self.ingestTo_label.setEnabled(False)
 
+
     def enable_platform(self):
 
         if (self.sensor_comboBox.currentText() == 'Sentinel-2'
                 or self.sensor_comboBox.currentText() == 'Sentinel-2A'
                 or self.sensor_comboBox.currentText() == 'Sentinel-2B'):
 
-            self.s2Tile_label.setEnabled(True)
-            self.s2Tile_lineEdit.setEnabled(True)
-            self.btnTileSearch.setEnabled(True)
-            self.tileSearch_textBrowser.setEnabled(True)
+            self.s2Extract_checkBox.setEnabled(True)
 
             self.s1Mode_label.setEnabled(False)
             self.s1Mode_comboBox.setEnabled(False)
@@ -210,10 +242,7 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
                 or self.sensor_comboBox.currentText() == 'Sentinel-1A'
                 or self.sensor_comboBox.currentText() == 'Sentinel-1B'):
 
-            self.s2Tile_label.setEnabled(False)
-            self.s2Tile_lineEdit.setEnabled(False)
-            self.btnTileSearch.setEnabled(False)
-            self.tileSearch_textBrowser.setEnabled(False)
+            self.s2Extract_checkBox.setEnabled(False)
 
             self.s1Mode_label.setEnabled(True)
             self.s1Mode_comboBox.setEnabled(True)
@@ -225,34 +254,28 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
             self.cloudCover_enable.setEnabled(False)
             self.cloudCover_spinBox.setEnabled(False)
             self.cloudCover_label.setEnabled(False)
-            self.cloudCover_enable.setChecked(False)
+
 
         else:
 
-            self.s2Tile_label.setEnabled(False)
-            self.s2Tile_lineEdit.setEnabled(False)
-            self.btnTileSearch.setEnabled(False)
-            self.tileSearch_textBrowser.setEnabled(False)
+            self.s2Extract_checkBox.setEnabled(False)
 
-            self.s1Mode_label.setEnabled(True)
-            self.s1Mode_comboBox.setEnabled(True)
-            self.s1Polar_label.setEnabled(True)
-            self.s1Polar_comboBox.setEnabled(True)
-            self.s1Product_label.setEnabled(True)
-            self.s1Product_comboBox.setEnabled(True)
+            self.s1Mode_label.setEnabled(False)
+            self.s1Mode_comboBox.setEnabled(False)
+            self.s1Polar_label.setEnabled(False)
+            self.s1Polar_comboBox.setEnabled(False)
+            self.s1Product_label.setEnabled(False)
+            self.s1Product_comboBox.setEnabled(False)
 
-            self.cloudCover_enable.setEnabled(True)
-            if self.cloudCover_enable.isChecked() == True:
-                self.cloudCover_spinBox.setEnabled(True)
-                self.cloudCover_label.setEnabled(True)
+            self.cloudCover_enable.setEnabled(False)
+            self.cloudCover_spinBox.setEnabled(False)
+            self.cloudCover_label.setEnabled(False)
 
 
     def enable_tile_search(self):
 
         if str(len(self.s2Tile_lineEdit.text())) == '5':
             self.btnTileSearch.setEnabled(True)
-            self.tileSearch_textBrowser.setEnabled(True)
+
         else:
             self.btnTileSearch.setEnabled(False)
-            self.tileSearch_textBrowser.setEnabled(False)
-            self.tileSearch_textBrowser.setText('')
