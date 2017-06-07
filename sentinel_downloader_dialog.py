@@ -62,6 +62,7 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
         # self.s1Mode_comboBox
         # self.s1Polar_comboBox
         # self.s1Product_comboBox
+        # self.s2Product_comboBox
         # self.cloudCover_enable
         # self.cloudCover_spinBox
         # self.orbitDir_comboBox
@@ -140,9 +141,10 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
         #
         # Orbit type radio buttons -- set relative as default.
         #
-        self.relOrbit_radioButton.setAutoExclusive(False);
-        self.relOrbit_radioButton.setChecked(True);
-        self.relOrbit_radioButton.setAutoExclusive(True);
+        self.relOrbit_radioButton.setAutoExclusive(False)
+        self.relOrbit_radioButton.setChecked(True)
+        self.relOrbit_radioButton.setAutoExclusive(True)
+
 
     def adjust_maxRecords(self):
 
@@ -232,6 +234,8 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
             self.s1Product_label.setEnabled(False)
             self.s1Product_comboBox.setEnabled(False)
 
+            self.s2Product_label.setEnabled(True)
+            self.s2Product_comboBox.setEnabled(True)
             self.cloudCover_enable.setEnabled(True)
             if self.cloudCover_enable.isChecked() == True:
                 self.cloudCover_spinBox.setEnabled(True)
@@ -251,6 +255,8 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
             self.s1Product_label.setEnabled(True)
             self.s1Product_comboBox.setEnabled(True)
 
+            self.s2Product_label.setEnabled(False)
+            self.s2Product_comboBox.setEnabled(False)
             self.cloudCover_enable.setEnabled(False)
             self.cloudCover_spinBox.setEnabled(False)
             self.cloudCover_label.setEnabled(False)
@@ -267,6 +273,8 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
             self.s1Product_label.setEnabled(False)
             self.s1Product_comboBox.setEnabled(False)
 
+            self.s2Product_label.setEnabled(False)
+            self.s2Product_comboBox.setEnabled(False)
             self.cloudCover_enable.setEnabled(False)
             self.cloudCover_spinBox.setEnabled(False)
             self.cloudCover_label.setEnabled(False)

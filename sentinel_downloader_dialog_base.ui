@@ -668,6 +668,38 @@ background-color: rgba(85, 170, 0, 180);</string>
          <item row="16" column="0" colspan="2">
           <layout class="QHBoxLayout" name="s2_horizontalLayout">
            <item>
+            <widget class="QLabel" name="s2Product_label">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Product type:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="s2Product_comboBox">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <item>
+              <property name="text">
+               <string/>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>S2MSI1C</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>S2MSI2Ap</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item>
             <widget class="QLabel" name="cloudCover_label">
              <property name="enabled">
               <bool>false</bool>
@@ -1537,6 +1569,13 @@ background-color: rgba(85, 170, 0, 180);</string>
          <item row="18" column="0">
           <layout class="QHBoxLayout" name="horizontalLayout_6">
            <item>
+            <widget class="QProgressBar" name="search_progressBar">
+             <property name="value">
+              <number>0</number>
+             </property>
+            </widget>
+           </item>
+           <item>
             <spacer name="horizontalSpacer_13">
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
@@ -2107,6 +2146,9 @@ background-color: rgba(85, 170, 0, 180);</string>
              <height>361</height>
             </rect>
            </property>
+           <property name="sortingEnabled">
+            <bool>true</bool>
+           </property>
            <column>
             <property name="text">
              <string>Filename</string>
@@ -2179,8 +2221,8 @@ background-color: rgba(85, 170, 0, 180);</string>
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>100</width>
-            <height>30</height>
+            <width>680</width>
+            <height>365</height>
            </rect>
           </property>
           <attribute name="label">
