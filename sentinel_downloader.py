@@ -191,6 +191,7 @@ class SentinelDownloader:
         # Button actions.
         #
         self.dlg.writeDir_toolButton.clicked.connect(self.downloader.open)
+        #self.dlg.btnSearch.clicked.connect(self.downloader.get_query_xml)
         self.dlg.btnSearch.clicked.connect(self.queryThread)
         self.dlg.btnTileSearch.clicked.connect(self.downloader.get_tile_coords)
         self.dlg.btnClearSelected.clicked.connect(self.downloader.remove_selected)
@@ -247,8 +248,9 @@ class SentinelDownloader:
         worker = SentinelSearch(self.dlg)
         thread = QThread()
         worker.moveToThread(thread)
-        thread.started.connect(worker.get_query_xml)
         thread.start()
+        thread.started.connect(worker.get_query_xml_worker)
+        worker.set_message.connect(self.set_messageBar)
         worker.finished.connect(self.workerFinished)
 
         self.worker = worker
@@ -261,3 +263,8 @@ class SentinelDownloader:
         self.thread.quit()
         self.thread.wait()
         self.thread.deleteLater()
+
+
+    def set_messageBar(self, message):
+
+        self.iface.messageBar().pushMessage('Results', message, duration=30)

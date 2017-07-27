@@ -30,8 +30,11 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 
 class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
+
     def __init__(self, parent=None):
+
         """Constructor."""
+        
         super(SentinelDownloaderDialog, self).__init__(parent)
         # Set up the user interface from Designer.
         # After setupUI you can access any designer object by doing

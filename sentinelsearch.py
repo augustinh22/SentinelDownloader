@@ -14,10 +14,12 @@ from PyQt4.QtGui import QAction, QIcon, QMessageBox, QFileDialog, QTableWidgetIt
 class SentinelSearch(QObject):
 
     finished = pyqtSignal(object)
+    set_message = pyqtSignal(str)
 
     def __init__(self, dialog):
         QObject.__init__(self)
         self.dlg = dialog
+        self.killed = False
 
 
     def open(self):
@@ -409,7 +411,9 @@ class SentinelSearch(QObject):
         # Add tile query check -- made redundant in get_arguments().
         #
         if (options.tile != None
-                and options.sentinel != 'S2'
+                and (options.sentinel != 'S2'
+                or options.sentinel != 'S2A'
+                or options.sentinel != 'S2B')
                 and self.dlg.s2Extract_checkBox.isChecked()==True):
 
             message = 'Tile extraction option can only be used for Sentinel-2!'
@@ -604,7 +608,6 @@ class SentinelSearch(QObject):
         #
         # Add Sentinel-2 specific query parameters.
         #
-
         if options.s2product is not None:
 
             query += ' AND (producttype:{})'.format(options.s2product)
@@ -728,8 +731,6 @@ class SentinelSearch(QObject):
 
     def get_query_xml(self):
 
-        ret = None
-
         options = self.get_arguments()
 
         if options.user is None or options.password is None:
@@ -767,9 +768,12 @@ class SentinelSearch(QObject):
         try:
             response = session.get(query, stream=True)
             query_tree = etree.fromstring(response.content)
+
         except:
+
             message = ('Error with connection.\n'
                 'Please check credentials, try another hub or try again later.')
+
             self.text_to_messagebox('Error', message)
             #query_tree = etree.parse('C:\Users\GISmachine\Documents\GitHub\AIQ\query_results.xml')
             return
@@ -815,14 +819,32 @@ class SentinelSearch(QObject):
             tW1_UUIDs = []
             tW1Rows = tW1.rowCount()
             for row in xrange(0,tW1Rows):
-                tw1_col11 = tW1.item(row,11).text()
-                tW1_UUIDs.append(tw1_col11)
+
+                #
+                # Try loop to avoid when UUID is None (Database issue)
+                #
+                try:
+                    tw1_col11 = tW1.item(row,11).text()
+                    tW1_UUIDs.append(tw1_col11)
+
+                except:
+                    # This seems to happen, if UUID is None.
+                    pass
 
             tW2_UUIDs = []
             tW2Rows = tW2.rowCount()
             for row in xrange(0,tW2Rows):
-                tw2_col11 = tW2.item(row,11).text()
-                tW2_UUIDs.append(tw2_col11)
+
+                #
+                # Try loop to avoid when UUID is None (Database issue)
+                #
+                try:
+                    tw2_col11 = tW2.item(row,11).text()
+                    tW2_UUIDs.append(tw2_col11)
+
+                except:
+                    # This seems to happen, if UUID is None.
+                    pass
 
             if uuid_element in tW2_UUIDs or uuid_element in tW1_UUIDs:
 
@@ -970,7 +992,9 @@ class SentinelSearch(QObject):
                         self.add_to_table(tW2, sentinel_link, c, 12)
 
         total_size = self.return_total_size(tW1, tW2)
-        self.text_to_messagebox('Results.', 'Total size of results: {}'.format(total_size))
+        #self.text_to_messagebox('Results.', 'Total size of results: {}'.format(total_size))
+        size_message = 'Total size of results: {}'.format(total_size)
+        self.set_message.emit(size_message)
         session.close()
 
         #
@@ -978,8 +1002,13 @@ class SentinelSearch(QObject):
         #
         self.dlg.search_progressBar.reset()
 
-        self.finished.emit(ret)
 
+    def get_query_xml_worker(self):
+
+        ret = None
+        self.get_query_xml()
+        ret = 'Done'
+        self.finished.emit(ret)
 
     def return_total_size(self, tW1, tW2):
 
@@ -1017,6 +1046,7 @@ class SentinelSearch(QObject):
         total_size = '{0:.2f} GB'.format(total_size)
 
         return total_size
+
 
     def return_tiles(self, session, uuid_element, filename, huburl, tile=''):
 
