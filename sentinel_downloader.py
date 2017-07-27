@@ -328,33 +328,41 @@ class SentinelDownloader:
     def reset_parameters(self):
 
         self.dlg.sensor_comboBox.setCurrentIndex(0)
+
+        self.dlg.maxRecords_spinBox.setValue(100)
         self.dlg.orderBy_comboBox.setCurrentIndex(0)
         self.dlg.LLX_lineEdit.clear()
         self.dlg.ULX_lineEdit.clear()
         self.dlg.LLY_lineEdit.clear()
         self.dlg.ULY_lineEdit.clear()
+        self.dlg.lat_lineEdit.clear()
+        self.dlg.lon_lineEdit.clear()
         self.dlg.s2Tile_lineEdit.clear()
-        # self.dlg.writeDir_toolButton
-        # self.dlg.writeDir_txtPath
+        self.dlg.s2Extract_checkBox.setChecked(False)
+
+        today = QDate.currentDate()
+        self.dlg.ingestFrom_dateEdit.setEnabled(False)
+        self.dlg.ingestFrom_dateEdit.setDate(QDate(2013, 04, 13))
+        self.dlg.ingestTo_dateEdit.setEnabled(False)
+        self.dlg.ingestTo_dateEdit.setDate(today)
+        self.dlg.ingest_enable.setChecked(False)
+        self.dlg.dateFrom_dateEdit.setEnabled(False)
+        self.dlg.dateFrom_dateEdit.setDate(QDate(2013, 04, 13))
+        self.dlg.dateTo_dateEdit.setEnabled(False)
+        self.dlg.dateTo_dateEdit.setDate(today)
+        self.dlg.date_enable.setChecked(False)
+
+        self.dlg.orbit_lineEdit.clear()
+        self.dlg.relOrbit_radioButton.setChecked(True)
+        self.dlg.orbitDir_comboBox.setCurrentIndex(0)
+
         self.dlg.s1Mode_comboBox.setCurrentIndex(0)
         self.dlg.s1Polar_comboBox.setCurrentIndex(0)
         self.dlg.s1Product_comboBox.setCurrentIndex(0)
+
         self.dlg.s2Product_comboBox.setCurrentIndex(0)
-        # self.dlg.cloudCover_enable
-        # self.dlg.cloudCover_spinBox
-        self.dlg.orbitDir_comboBox.setCurrentIndex(0)
-        # self.dlg.orbit_lineEdit
-        # self.dlg.ingestFrom_dateEdit
-        # self.dlg.ingestTo_dateEdit
-        # self.dlg.ingest_enable
-        # self.dlg.dateFrom_dateEdit
-        # self.dlg.dateTo_dateEdit
-        # self.dlg.date_enable
-        # self.dlg.maxRecords_spinBox
-        # self.dlg.results_tableWidget
-        # self.dlg.btnTileSearch
-        self.dlg.lat_lineEdit.clear()
-        self.dlg.lon_lineEdit.clear()
+        self.dlg.cloudCover_spinBox.setValue(10)
+        self.dlg.cloudCover_enable.setChecked(False)
 
 
     def text_to_messagebox(self, header, message, long_text=None):
