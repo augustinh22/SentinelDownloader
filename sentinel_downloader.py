@@ -40,6 +40,7 @@ from sentinelsearch import SentinelSearch
 
 
 class SentinelDownloader:
+
     """QGIS Plugin Implementation."""
 
     def __init__(self, iface):
@@ -191,8 +192,9 @@ class SentinelDownloader:
         # Button actions.
         #
         self.dlg.writeDir_toolButton.clicked.connect(self.downloader.open)
-        #self.dlg.btnSearch.clicked.connect(self.downloader.get_query_xml)
-        self.dlg.btnSearch.clicked.connect(self.queryThread)
+        self.dlg.btnSearch.clicked.connect(self.search_thread)
+        self.dlg.btnSearchCancel.clicked.connect(self.stop_search)
+        self.dlg.btnReset.clicked.connect(self.reset_parameters)
         self.dlg.btnTileSearch.clicked.connect(self.downloader.get_tile_coords)
         self.dlg.btnClearSelected.clicked.connect(self.downloader.remove_selected)
         self.dlg.btnDownload.clicked.connect(self.downloader.download_results)
@@ -243,26 +245,128 @@ class SentinelDownloader:
         #     # substitute with your code.
         #     pass
 
-    def queryThread(self):
 
-        worker = SentinelSearch(self.dlg)
-        thread = QThread()
-        worker.moveToThread(thread)
-        thread.start()
-        thread.started.connect(worker.get_query_xml_worker)
-        worker.set_message.connect(self.set_messageBar)
-        worker.finished.connect(self.workerFinished)
+    def search_thread(self):
 
-        self.worker = worker
-        self.thread = thread
+        #
+        # Disable search button while searching.
+        #
+        self.dlg.btnSearch.setEnabled(False)
+
+        self.worker = SentinelSearch(self.dlg)
+        self.thread = QThread()
+        self.worker.moveToThread(self.thread)
+
+        self.thread.start()
+        self.thread.started.connect(self.worker.get_query_xml)
+
+        #
+        # Signal handelling from thread.
+        #
+        self.worker.connecting_message.connect(self.set_search_label)
+        self.worker.searching_message.connect(self.set_search_label)
+        self.worker.enable_btnSearch.connect(self.enable_btnSearch)
+        self.worker.search_progress_max.connect(self.set_progress_max)
+        self.worker.search_progress_set.connect(self.set_progress)
+        self.worker.set_message.connect(self.set_messageBar)
+        self.worker.finished.connect(self.search_finished)
 
 
-    def workerFinished(self):
 
+    def set_search_label(self, text):
+
+        self.dlg.search_label.setText(text)
+
+
+    def set_progress_max(self, max_value):
+
+        self.dlg.search_progressBar.setMinimum(0)
+        self.dlg.search_progressBar.setMaximum(max_value)
+
+
+    def set_progress(self, percent):
+
+        self.dlg.search_progressBar.setValue(percent)
+
+    def enable_btnSearch(self):
+
+        self.dlg.btnSearch.setEnabled(True)
+
+
+    def search_finished(self, killed=False):
+
+        #
+        # Clear progress bar widget and label.
+        #
+        self.dlg.search_progressBar.reset()
+        self.dlg.search_progressBar.setMinimum(0)
+        self.set_search_label('')
+
+        if killed is False:
+
+            self.text_to_messagebox('Done!', 'Done fetching search results!')
+
+        #
+        # Clean up Thread.
+        #
         self.worker.deleteLater()
         self.thread.quit()
-        self.thread.wait()
         self.thread.deleteLater()
+
+        #
+        # Enable search button after searching.
+        #
+        self.dlg.btnSearch.setEnabled(True)
+
+
+    def stop_search(self):
+
+        if self.worker:
+
+            self.worker.killed = True
+
+    def reset_parameters(self):
+
+        self.dlg.sensor_comboBox.setCurrentIndex(0)
+        self.dlg.orderBy_comboBox.setCurrentIndex(0)
+        self.dlg.LLX_lineEdit.clear()
+        self.dlg.ULX_lineEdit.clear()
+        self.dlg.LLY_lineEdit.clear()
+        self.dlg.ULY_lineEdit.clear()
+        self.dlg.s2Tile_lineEdit.clear()
+        # self.dlg.writeDir_toolButton
+        # self.dlg.writeDir_txtPath
+        self.dlg.s1Mode_comboBox.setCurrentIndex(0)
+        self.dlg.s1Polar_comboBox.setCurrentIndex(0)
+        self.dlg.s1Product_comboBox.setCurrentIndex(0)
+        self.dlg.s2Product_comboBox.setCurrentIndex(0)
+        # self.dlg.cloudCover_enable
+        # self.dlg.cloudCover_spinBox
+        self.dlg.orbitDir_comboBox.setCurrentIndex(0)
+        # self.dlg.orbit_lineEdit
+        # self.dlg.ingestFrom_dateEdit
+        # self.dlg.ingestTo_dateEdit
+        # self.dlg.ingest_enable
+        # self.dlg.dateFrom_dateEdit
+        # self.dlg.dateTo_dateEdit
+        # self.dlg.date_enable
+        # self.dlg.maxRecords_spinBox
+        # self.dlg.results_tableWidget
+        # self.dlg.btnTileSearch
+        self.dlg.lat_lineEdit.clear()
+        self.dlg.lon_lineEdit.clear()
+
+
+    def text_to_messagebox(self, header, message, long_text=None):
+
+        msg_txt = QMessageBox()
+        msg_txt.setIcon(QMessageBox.Information)
+        msg_txt.setText(message)
+        #msg_txt.setInformativeText("This is additional information")
+        msg_txt.setWindowTitle(header)
+        if long_text is not None:
+            msg_txt.setDetailedText(long_text)
+        msg_txt.exec_()
 
 
     def set_messageBar(self, message):
