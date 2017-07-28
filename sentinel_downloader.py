@@ -57,6 +57,12 @@ class SentinelDownloader:
         self.iface = iface
 
         #
+        # Initialize threads.
+        #
+        self.worker = None
+        self.workerD = None
+
+        #
         # Initialize plugin directory.
         #
         self.plugin_dir = os.path.dirname(__file__)
@@ -193,11 +199,13 @@ class SentinelDownloader:
         #
         self.dlg.writeDir_toolButton.clicked.connect(self.downloader.open)
         self.dlg.btnSearch.clicked.connect(self.search_thread)
-        self.dlg.btnSearchCancel.clicked.connect(self.stop_search)
+        self.dlg.btnSearchCancel.clicked.connect(self.kill)
         self.dlg.btnReset.clicked.connect(self.reset_parameters)
         self.dlg.btnTileSearch.clicked.connect(self.downloader.get_tile_coords)
         self.dlg.btnClearSelected.clicked.connect(self.downloader.remove_selected)
-        self.dlg.btnDownload.clicked.connect(self.downloader.download_results)
+        self.dlg.btnDownload.clicked.connect(self.download_thread)
+        #self.dlg.btnDownload.clicked.connect(self.download_S1thread)
+        self.dlg.btnDownloadCancel.clicked.connect(self.kill)
         self.dlg.btnClear.clicked.connect(self.downloader.clearTable)
 
         return action
@@ -277,14 +285,32 @@ class SentinelDownloader:
 
         self.dlg.search_label.setText(text)
 
+        if text == 'Connecting . . .':
+            #
+            # This makes progressBar move until real max is set.
+            #
+            self.dlg.search_progressBar.setMinimum(0)
+            self.dlg.search_progressBar.setMaximum(0)
+
 
     def set_progress_max(self, max_value):
 
-        self.dlg.search_progressBar.setMinimum(0)
-        self.dlg.search_progressBar.setMaximum(max_value)
+        if max_value == 0:
+            #
+            # If there are no entries, reset bar to avoid problems.
+            #
+            self.dlg.search_progressBar.setMinimum(0)
+            self.dlg.search_progressBar.reset()
+
+        else:
+            self.dlg.search_progressBar.setMinimum(0)
+            self.dlg.search_progressBar.setMaximum(100)
 
 
     def set_progress(self, percent):
+
+        if percent > 100:
+            percent = 100
 
         self.dlg.search_progressBar.setValue(percent)
 
@@ -322,11 +348,15 @@ class SentinelDownloader:
         self.dlg.btnSearchCancel.setEnabled(False)
 
 
-    def stop_search(self):
+    def kill(self):
 
         if self.worker:
 
             self.worker.killed = True
+
+        if self.workerD:
+
+            self.workerD.killed = True
 
 
     def reset_parameters(self):
@@ -369,6 +399,58 @@ class SentinelDownloader:
         self.dlg.cloudCover_enable.setChecked(False)
 
 
+    def download_thread(self):
+
+        self.dlg.btnDownload.setEnabled(False)
+        self.dlg.btnDownloadCancel.setEnabled(True)
+        self.dlg.download_progressBar.setMinimum(0)
+        self.dlg.download_progressBar.setMaximum(100)
+
+        self.workerD = SentinelSearch(self.dlg)
+        self.threadD = QThread()
+        self.workerD.moveToThread(self.threadD)
+
+        self.threadD.start()
+        self.threadD.started.connect(self.workerD.download_results)
+        self.workerD.download_progress_set.connect(self.set_download_progress)
+
+        self.workerD.finished_download.connect(self.download_finished)
+
+    def set_download_progress(self, percent):
+
+        if percent > 100:
+            percent = 100
+
+        self.dlg.download_progressBar.setValue(percent)
+
+
+    def download_finished(self, killed=False):
+
+        #
+        # Clear progress bar widget and label.
+        #
+        self.dlg.download_progressBar.reset()
+        self.dlg.download_progressBar.setMinimum(0)
+        # self.set_search_label('')
+
+        if killed is False:
+
+            self.text_to_messagebox('Done!', 'Done downloading Sentinel products!')
+
+        #
+        # Clean up Thread.
+        #
+        self.workerD.deleteLater()
+        self.threadD.quit()
+        self.threadD.deleteLater()
+
+        #
+        # Enable search button after searching.
+        #
+        self.dlg.btnDownload.setEnabled(True)
+        self.dlg.btnDownloadCancel.setEnabled(False)
+
+
     def text_to_messagebox(self, header, message, long_text=None):
 
         msg_txt = QMessageBox()
@@ -384,3 +466,48 @@ class SentinelDownloader:
     def set_messageBar(self, message):
 
         self.iface.messageBar().pushMessage('Results', message, duration=30)
+
+
+
+
+
+    def download_S1thread(self):
+
+        self.dlg.btnDownload.setEnabled(False)
+        self.dlg.btnDownloadCancel.setEnabled(True)
+
+        self.workerD1 = SentinelSearch(self.dlg)
+        self.threadD1 = QThread()
+        self.workerD1.moveToThread(self.threadD1)
+
+        self.threadD1.start()
+        self.threadD1.started.connect(self.workerD1.download_onlyS1)
+
+        self.workerD1.finished_S1download.connect(self.download_S1finished)
+
+
+    def download_S1finished(self, killed=False):
+
+        #
+        # Clear progress bar widget and label.
+        #
+        # self.dlg.search_progressBar.reset()
+        # self.dlg.search_progressBar.setMinimum(0)
+        # self.set_search_label('')
+
+        if killed is False:
+
+            self.text_to_messagebox('Done!', 'Done downloading Sentinel products!')
+
+        #
+        # Clean up Thread.
+        #
+        self.workerD1.deleteLater()
+        self.threadD1.quit()
+        self.threadD1.deleteLater()
+
+        #
+        # Enable search button after searching.
+        #
+        self.dlg.btnDownload.setEnabled(True)
+        self.dlg.btnDownloadCancel.setEnabled(False)

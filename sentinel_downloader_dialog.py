@@ -147,6 +147,9 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
         self.btnSearchCancel.setEnabled(False)
         self.btnSearch.setEnabled(True)
 
+        self.btnDownloadCancel.setEnabled(False)
+        self.btnDownload.setEnabled(True)
+
 
     def adjust_maxRecords(self):
 
