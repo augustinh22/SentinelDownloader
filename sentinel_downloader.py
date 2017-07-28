@@ -252,6 +252,7 @@ class SentinelDownloader:
         # Disable search button while searching.
         #
         self.dlg.btnSearch.setEnabled(False)
+        self.dlg.btnSearchCancel.setEnabled(True)
 
         self.worker = SentinelSearch(self.dlg)
         self.thread = QThread()
@@ -272,7 +273,6 @@ class SentinelDownloader:
         self.worker.finished.connect(self.search_finished)
 
 
-
     def set_search_label(self, text):
 
         self.dlg.search_label.setText(text)
@@ -288,9 +288,11 @@ class SentinelDownloader:
 
         self.dlg.search_progressBar.setValue(percent)
 
+
     def enable_btnSearch(self):
 
         self.dlg.btnSearch.setEnabled(True)
+        self.dlg.btnSearchCancel.setEnabled(False)
 
 
     def search_finished(self, killed=False):
@@ -317,6 +319,7 @@ class SentinelDownloader:
         # Enable search button after searching.
         #
         self.dlg.btnSearch.setEnabled(True)
+        self.dlg.btnSearchCancel.setEnabled(False)
 
 
     def stop_search(self):
@@ -324,6 +327,7 @@ class SentinelDownloader:
         if self.worker:
 
             self.worker.killed = True
+
 
     def reset_parameters(self):
 

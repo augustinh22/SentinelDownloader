@@ -80,6 +80,12 @@ class SentinelSearch(QObject):
             options.hub = 'apihub'
         elif self.dlg.hub_comboBox.currentText() == 'Dhus':
             options.hub = 'dhus'
+        elif self.dlg.hub_comboBox.currentText() == 'ZAMG':
+            options.hub = 'zamg'
+        elif self.dlg.hub_comboBox.currentText() == 'HNSDMS':
+            options.hub = 'hnsdms'
+        # elif self.dlg.hub_comboBox.currentText() == 'Finhub':
+        #     options.hub = 'finhub'
         else:
             options.hub = None
 
@@ -632,6 +638,7 @@ class SentinelSearch(QObject):
             message = 'Cloud cover is only relevant for Sentinel-2 images.'
             self.text_to_messagebox('Error.', message)
             return None
+
         else:
             pass
 
@@ -702,6 +709,19 @@ class SentinelSearch(QObject):
         elif options.hub == 'dhus':
             huburl = 'https://scihub.copernicus.eu/dhus/'
             maxrecords = 10
+
+        elif options.hub == 'zamg':
+            huburl = 'https://data.sentinel.zamg.ac.at/'
+            maxrecords = 100
+
+        elif options.hub == 'hnsdms':
+            huburl = 'https://sentinels.space.noa.gr/dhus/'
+            maxrecords = 100
+
+        # elif options.hub == 'finhub':
+        #     huburl = 'https://finhub.nsdc.fmi.fi/odata/'
+        #     maxrecords = 100
+
         else:
             huburl = None
             maxrecords = None
@@ -712,6 +732,7 @@ class SentinelSearch(QObject):
         if options.user is not None and options.password is not None:
             account = options.user
             passwd = options.password
+
         else:
             account = None
             passwd = None
@@ -733,6 +754,7 @@ class SentinelSearch(QObject):
 
         if sys.platform.startswith('linux') or sys.platform.startswith('darwin'):
             value ='\$value'
+
         else:
             value ='$value'
 

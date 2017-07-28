@@ -105,11 +105,6 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
         self.s2Tile_lineEdit.textChanged.connect(self.enable_tile_search)
 
         #
-        # Add directory search functionality.
-        #
-        # self.writeDir_toolButton
-
-        #
         # Adjust max records based on api hub.
         #
         self.hub_comboBox.currentIndexChanged.connect(self.adjust_maxRecords)
@@ -149,6 +144,9 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
         self.relOrbit_radioButton.setChecked(True)
         self.relOrbit_radioButton.setAutoExclusive(True)
 
+        self.btnSearchCancel.setEnabled(False)
+        self.btnSearch.setEnabled(True)
+
 
     def adjust_maxRecords(self):
 
@@ -161,6 +159,24 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
             self.maxRecords_spinBox.setValue(10)
 
         elif self.hub_comboBox.currentText() == 'API Hub':
+            self.maxRecords_spinBox.setMaximum(100)
+            self.maxRecords_spinBox.setMinimum(1)
+            self.maxRecords_spinBox.setSingleStep(10)
+            self.maxRecords_spinBox.setValue(100)
+
+        elif self.hub_comboBox.currentText() == 'ZAMG':
+            self.maxRecords_spinBox.setMaximum(100)
+            self.maxRecords_spinBox.setMinimum(1)
+            self.maxRecords_spinBox.setSingleStep(10)
+            self.maxRecords_spinBox.setValue(100)
+
+        elif self.hub_comboBox.currentText() == 'HNSDMS':
+            self.maxRecords_spinBox.setMaximum(100)
+            self.maxRecords_spinBox.setMinimum(1)
+            self.maxRecords_spinBox.setSingleStep(10)
+            self.maxRecords_spinBox.setValue(100)
+
+        elif self.hub_comboBox.currentText() == 'Finhub':
             self.maxRecords_spinBox.setMaximum(100)
             self.maxRecords_spinBox.setMinimum(1)
             self.maxRecords_spinBox.setSingleStep(10)

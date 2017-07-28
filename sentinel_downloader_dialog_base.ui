@@ -59,7 +59,7 @@
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="login_tab">
       <property name="sizePolicy">
@@ -287,6 +287,16 @@ background-color: rgba(85, 170, 0, 180);</string>
                <item>
                 <property name="text">
                  <string>Dhus</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>ZAMG</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>HNSDMS</string>
                 </property>
                </item>
               </widget>
