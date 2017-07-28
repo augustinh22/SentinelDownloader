@@ -849,11 +849,13 @@ class SentinelSearch(QObject):
                 #
                 uuid_element = (entries[entry].find('{http://www.w3.org/2005/Atom}'
                     'id')).text
-
+                title_element = (entries[entry].find('{http://www.w3.org/2005/Atom}'
+                    'title')).text
                 #
-                # Check both tables for UUID -- skip if already in either table.
+                # Check both tables for UUID and filename -- skip if already in either table.
                 #
                 tW1_UUIDs = []
+                tW1_fns = []
                 tW1Rows = tW1.rowCount()
                 for row in xrange(0,tW1Rows):
 
@@ -864,11 +866,15 @@ class SentinelSearch(QObject):
                         tw1_col11 = tW1.item(row,11).text()
                         tW1_UUIDs.append(tw1_col11)
 
+                        tw1_col0 = tW1.item(row,0).text()
+                        tW1_fns.append(tw1_col0)
+
                     except:
                         # This seems to happen, if UUID is None.
                         pass
 
                 tW2_UUIDs = []
+                tW2_fns = []
                 tW2Rows = tW2.rowCount()
                 for row in xrange(0,tW2Rows):
 
@@ -879,6 +885,9 @@ class SentinelSearch(QObject):
                         tw2_col11 = tW2.item(row,11).text()
                         tW2_UUIDs.append(tw2_col11)
 
+                        tw2_col0 = tW2.item(row,0).text()
+                        tW2_fns.append(tw2_col0)
+
                     except:
                         # This seems to happen, if UUID is None.
                         pass
@@ -887,8 +896,12 @@ class SentinelSearch(QObject):
 
                     continue
 
+                elif title_element in tW2_fns or title_element in tW1_fns:
+
+                    continue
+
                 #
-                # If UUID not in one of the tables, add record to respective table.
+                # If UUID and titel not in one of the tables, add record to respective table.
                 #
                 else:
 
