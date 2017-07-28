@@ -23,6 +23,7 @@
 
 import ast
 import sys
+import pyproj
 import os.path
 import requests
 import zipfile
@@ -198,6 +199,7 @@ class SentinelDownloader:
         # Button actions.
         #
         self.dlg.writeDir_toolButton.clicked.connect(self.downloader.open)
+        self.dlg.btnExtent.clicked.connect(self.get_extent)
         self.dlg.btnSearch.clicked.connect(self.search_thread)
         self.dlg.btnSearchCancel.clicked.connect(self.kill)
         self.dlg.btnReset.clicked.connect(self.reset_parameters)
@@ -252,6 +254,40 @@ class SentinelDownloader:
         #     # Do something useful here - delete the line containing pass and
         #     # substitute with your code.
         #     pass
+
+    def get_extent(self):
+
+        #
+        # Get current extent coordinates.
+        #
+        e = self.iface.mapCanvas().extent()
+
+        ULX = e.xMaximum()
+        ULY = e.yMaximum()
+        LLX = e.xMinimum()
+        LLY = e.yMinimum()
+
+        #
+        # Determine origin CRS and define destination CRS (EPSG:4326).
+        #
+        canvas = self.iface.mapCanvas()
+        epsg_code = canvas.mapRenderer().destinationCrs().authid()
+        inProj = pyproj.Proj(init=epsg_code)
+        outProj = pyproj.Proj(init='epsg:4326')
+
+        #
+        # Transform coordinates
+        #
+        ULX_new,ULY_new = pyproj.transform(inProj,outProj,ULX,ULY)
+        LLX_new,LLY_new = pyproj.transform(inProj,outProj,LLX,LLY)
+
+        #
+        # Set values.
+        #
+        self.dlg.LLX_lineEdit.setText(str('{0:.2f}'.format(LLX_new)))
+        self.dlg.ULX_lineEdit.setText(str('{0:.2f}'.format(ULX_new)))
+        self.dlg.LLY_lineEdit.setText(str('{0:.2f}'.format(LLY_new)))
+        self.dlg.ULY_lineEdit.setText(str('{0:.2f}'.format(ULY_new)))
 
 
     def search_thread(self):
@@ -467,47 +503,47 @@ class SentinelDownloader:
 
         self.iface.messageBar().pushMessage('Results', message, duration=30)
 
-
-
-
-
-    def download_S1thread(self):
-
-        self.dlg.btnDownload.setEnabled(False)
-        self.dlg.btnDownloadCancel.setEnabled(True)
-
-        self.workerD1 = SentinelSearch(self.dlg)
-        self.threadD1 = QThread()
-        self.workerD1.moveToThread(self.threadD1)
-
-        self.threadD1.start()
-        self.threadD1.started.connect(self.workerD1.download_onlyS1)
-
-        self.workerD1.finished_S1download.connect(self.download_S1finished)
-
-
-    def download_S1finished(self, killed=False):
-
-        #
-        # Clear progress bar widget and label.
-        #
-        # self.dlg.search_progressBar.reset()
-        # self.dlg.search_progressBar.setMinimum(0)
-        # self.set_search_label('')
-
-        if killed is False:
-
-            self.text_to_messagebox('Done!', 'Done downloading Sentinel products!')
-
-        #
-        # Clean up Thread.
-        #
-        self.workerD1.deleteLater()
-        self.threadD1.quit()
-        self.threadD1.deleteLater()
-
-        #
-        # Enable search button after searching.
-        #
-        self.dlg.btnDownload.setEnabled(True)
-        self.dlg.btnDownloadCancel.setEnabled(False)
+    #
+    #
+    #
+    #
+    # def download_S1thread(self):
+    #
+    #     self.dlg.btnDownload.setEnabled(False)
+    #     self.dlg.btnDownloadCancel.setEnabled(True)
+    #
+    #     self.workerD1 = SentinelSearch(self.dlg)
+    #     self.threadD1 = QThread()
+    #     self.workerD1.moveToThread(self.threadD1)
+    #
+    #     self.threadD1.start()
+    #     self.threadD1.started.connect(self.workerD1.download_onlyS1)
+    #
+    #     self.workerD1.finished_S1download.connect(self.download_S1finished)
+    #
+    #
+    # def download_S1finished(self, killed=False):
+    #
+    #     #
+    #     # Clear progress bar widget and label.
+    #     #
+    #     # self.dlg.search_progressBar.reset()
+    #     # self.dlg.search_progressBar.setMinimum(0)
+    #     # self.set_search_label('')
+    #
+    #     if killed is False:
+    #
+    #         self.text_to_messagebox('Done!', 'Done downloading Sentinel products!')
+    #
+    #     #
+    #     # Clean up Thread.
+    #     #
+    #     self.workerD1.deleteLater()
+    #     self.threadD1.quit()
+    #     self.threadD1.deleteLater()
+    #
+    #     #
+    #     # Enable search button after searching.
+    #     #
+    #     self.dlg.btnDownload.setEnabled(True)
+    #     self.dlg.btnDownloadCancel.setEnabled(False)

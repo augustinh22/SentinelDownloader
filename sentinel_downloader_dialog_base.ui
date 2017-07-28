@@ -59,7 +59,7 @@
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>2</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="login_tab">
       <property name="sizePolicy">
@@ -1689,6 +1689,19 @@ background-color: rgba(85, 170, 0, 180);</string>
                </property>
               </spacer>
              </item>
+             <item>
+              <spacer name="horizontalSpacer_23">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
             </layout>
            </item>
            <item row="2" column="0">
@@ -1827,6 +1840,13 @@ background-color: rgba(85, 170, 0, 180);</string>
                 </size>
                </property>
               </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnExtent">
+               <property name="text">
+                <string>Current Extent</string>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
@@ -2164,8 +2184,8 @@ background-color: rgba(85, 170, 0, 180);</string>
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>680</width>
-            <height>365</height>
+            <width>100</width>
+            <height>30</height>
            </rect>
           </property>
           <attribute name="label">

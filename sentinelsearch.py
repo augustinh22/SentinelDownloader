@@ -3,7 +3,6 @@ import sys
 import os.path
 import requests
 import zipfile
-import multiprocessing as mp
 from datetime import date
 from datetime import datetime
 import xml.etree.ElementTree as etree
@@ -16,7 +15,7 @@ class SentinelSearch(QObject):
 
     finished = pyqtSignal(bool)
     finished_download = pyqtSignal(bool)
-    finished_S1download = pyqtSignal(bool)
+    # finished_S1download = pyqtSignal(bool)
     set_message = pyqtSignal(str)
     connecting_message = pyqtSignal(str)
     searching_message = pyqtSignal(str)
@@ -1046,7 +1045,6 @@ class SentinelSearch(QObject):
                             self.add_to_table(tW2, uuid_element, c, 11)
                             self.add_to_table(tW2, sentinel_link, c, 12)
 
-
             total_size = self.return_total_size(tW1, tW2)
             #self.text_to_messagebox('Results.', 'Total size of results: {}'.format(total_size))
             size_message = 'Total size of results: {}'.format(total_size)
@@ -1529,127 +1527,124 @@ class SentinelSearch(QObject):
 
         	tW.removeRow(v[i])
 
-
-
-
-
-    def get_S1download_links(self):
-
-        options = self.get_arguments()
-
-        S1_links = []
-
-        #
-        # Define data tables for S1 and S2 results.
-        #
-        tW1 = self.dlg.s1Results_tableWidget
-
-        #
-        # Download Sentinel-1 results from S1 table.
-        #
-        tW1Rows = tW1.rowCount()
-        for row in xrange(0,tW1Rows):
-
-            sentinel_link = tW1.item(row,12).text()
-
-            S1_links.append(sentinel_link)
-
-        return S1_links
-
-
-    def download_S1links(self, sentinel_link):
-
-        options = self.get_arguments()
-
-        #
-        # Make sure write_dir is formatted properly.
-        #
-        if (sys.platform.startswith('linux')
-                or sys.platform.startswith('darwin')
-                and options.write_dir is not None):
-            # Add whatever might be necessary here.
-            pass
-
-        elif options.write_dir is not None:
-            options.write_dir = (options.write_dir).replace('/', '\\')
-        elif options.write_dir is None:
-            message = 'Please enter a directory to download the data to!'
-            self.text_to_messagebox('Error', message)
-            return None
-        else:
-            pass
-
-        #
-        # Define data tables for S1 and S2 results.
-        #
-        tW1 = self.dlg.s1Results_tableWidget
-
-        #
-        # Create authenticated http session.
-        #
-        session, huburl, account, passwd, maxrecords = self.start_session(options)
-
-        #
-        # Platform dependent stuff.
-        #
-        value = self.set_value()
-
-        tW1Rows = tW1.rowCount()
-        for row in xrange(0,tW1Rows):
-
-            entry_sentinel_link = tW1.item(row,12).text()
-
-            if sentinel_link == entry_sentinel_link:
-
-                title_element = tW1.item(row,0).text()
-                filename = '{}.SAFE'.format(title_element)
-                zfile = '{}.zip'.format(title_element)
-                break
-
-        #
-        # Skip files that have already been downloaded.
-        #
-        check = self.download_check(options.write_dir, title_element, filename)
-
-        if check is True:
-
-            pass
-
-        else:
-            target_path = os.path.join(options.write_dir, zfile)
-            chunk_size = 1024*1024*10
-            #
-            # Download file in chunks using requests module.
-            #
-            try:
-                response = session.get(sentinel_link, stream=True)
-                with open(target_path, "wb") as handle:
-                    #
-                    # Iterate over content in 10MB chunks.
-                    #
-                    for chunk in response.iter_content(chunk_size):
-
-                        if not chunk:
-                            break
-
-                        handle.write(chunk)
-            except:
-                pass
-
-
-    def download_onlyS1(self):
-
-        S1_links = self.get_S1download_links()
-        # link_string = ''
-        # link_string = ','.join(S1_links)
-        # self.text_to_messagebox('Error', link_string)
-
-        with mp.Pool(2) as p:
-            p.map(self.download_S1links, S1_links)
-
-        self.finished_S1download.emit(self.killed)
-
-
+    #
+    # def get_S1download_links(self):
+    #
+    #     options = self.get_arguments()
+    #
+    #     S1_links = []
+    #
+    #     #
+    #     # Define data tables for S1 and S2 results.
+    #     #
+    #     tW1 = self.dlg.s1Results_tableWidget
+    #
+    #     #
+    #     # Download Sentinel-1 results from S1 table.
+    #     #
+    #     tW1Rows = tW1.rowCount()
+    #     for row in xrange(0,tW1Rows):
+    #
+    #         sentinel_link = tW1.item(row,12).text()
+    #
+    #         S1_links.append(sentinel_link)
+    #
+    #     return S1_links
+    #
+    #
+    # def download_S1links(self, sentinel_link):
+    #
+    #     options = self.get_arguments()
+    #
+    #     #
+    #     # Make sure write_dir is formatted properly.
+    #     #
+    #     if (sys.platform.startswith('linux')
+    #             or sys.platform.startswith('darwin')
+    #             and options.write_dir is not None):
+    #         # Add whatever might be necessary here.
+    #         pass
+    #
+    #     elif options.write_dir is not None:
+    #         options.write_dir = (options.write_dir).replace('/', '\\')
+    #     elif options.write_dir is None:
+    #         message = 'Please enter a directory to download the data to!'
+    #         self.text_to_messagebox('Error', message)
+    #         return None
+    #     else:
+    #         pass
+    #
+    #     #
+    #     # Define data tables for S1 and S2 results.
+    #     #
+    #     tW1 = self.dlg.s1Results_tableWidget
+    #
+    #     #
+    #     # Create authenticated http session.
+    #     #
+    #     session, huburl, account, passwd, maxrecords = self.start_session(options)
+    #
+    #     #
+    #     # Platform dependent stuff.
+    #     #
+    #     value = self.set_value()
+    #
+    #     tW1Rows = tW1.rowCount()
+    #     for row in xrange(0,tW1Rows):
+    #
+    #         entry_sentinel_link = tW1.item(row,12).text()
+    #
+    #         if sentinel_link == entry_sentinel_link:
+    #
+    #             title_element = tW1.item(row,0).text()
+    #             filename = '{}.SAFE'.format(title_element)
+    #             zfile = '{}.zip'.format(title_element)
+    #             break
+    #
+    #     #
+    #     # Skip files that have already been downloaded.
+    #     #
+    #     check = self.download_check(options.write_dir, title_element, filename)
+    #
+    #     if check is True:
+    #
+    #         pass
+    #
+    #     else:
+    #         target_path = os.path.join(options.write_dir, zfile)
+    #         chunk_size = 1024*1024*10
+    #         #
+    #         # Download file in chunks using requests module.
+    #         #
+    #         try:
+    #             response = session.get(sentinel_link, stream=True)
+    #             with open(target_path, "wb") as handle:
+    #                 #
+    #                 # Iterate over content in 10MB chunks.
+    #                 #
+    #                 for chunk in response.iter_content(chunk_size):
+    #
+    #                     if not chunk:
+    #                         break
+    #
+    #                     handle.write(chunk)
+    #         except:
+    #             pass
+    #
+    #
+    # def download_onlyS1(self):
+    #
+    #     S1_links = self.get_S1download_links()
+    #     # link_string = ''
+    #     # link_string = ','.join(S1_links)
+    #     # self.text_to_messagebox('Error', link_string)
+    #
+    #     # with mp.Pool(2) as p:
+    #     #     p.map(self.download_S1links, S1_links)
+    #
+    #     self.finished_S1download.emit(self.killed)
+    #
+    #
 
 
 #
