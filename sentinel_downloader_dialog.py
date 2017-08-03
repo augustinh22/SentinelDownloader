@@ -250,6 +250,14 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
 
             self.s2Extract_checkBox.setEnabled(True)
 
+            dt = self.ingestFrom_dateEdit.date()
+            if dt.year() <= 2015 and dt.month() <= 06 and dt.day() <= 23:
+                self.ingestFrom_dateEdit.setDate(QtCore.QDate(2015, 06, 23))
+
+            dt = self.dateFrom_dateEdit.date()
+            if dt.year() <= 2015 and dt.month() <= 06 and dt.day() <= 23:
+                self.dateFrom_dateEdit.setDate(QtCore.QDate(2015, 06, 23))
+
             self.s1Mode_label.setEnabled(False)
             self.s1Mode_comboBox.setEnabled(False)
             self.s1Polar_label.setEnabled(False)
