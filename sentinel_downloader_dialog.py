@@ -83,6 +83,9 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
         # self.lon_lineEdit
         # self.search_label
 
+        self.pass_lineEdit.setText('')
+        self.user_lineEdit.setText('')
+
         #
         # Hide password.
         #
@@ -250,6 +253,9 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
 
             self.s2Extract_checkBox.setEnabled(True)
 
+            #
+            # Adjust possible capture and ingest dates if only S2.
+            #
             dt = self.ingestFrom_dateEdit.date()
             if dt.year() <= 2015 and dt.month() <= 06 and dt.day() <= 23:
                 self.ingestFrom_dateEdit.setDate(QtCore.QDate(2015, 06, 23))
@@ -292,6 +298,20 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
             self.cloudCover_spinBox.setEnabled(False)
             self.cloudCover_label.setEnabled(False)
 
+        elif (self.sensor_comboBox.currentText() == 'Sentinel-3'
+                or self.sensor_comboBox.currentText() == 'Sentinel-3A'
+                or self.sensor_comboBox.currentText() == 'Sentinel-3B'):
+
+            #
+            # Adjust possible capture and ingest dates if only S3.
+            #
+            dt = self.ingestFrom_dateEdit.date()
+            if dt.year() <= 2016 and dt.month() <= 02 and dt.day() <= 16:
+                self.ingestFrom_dateEdit.setDate(QtCore.QDate(2016, 02, 16))
+
+            dt = self.dateFrom_dateEdit.date()
+            if dt.year() <= 2016 and dt.month() <= 02 and dt.day() <= 16:
+                self.dateFrom_dateEdit.setDate(QtCore.QDate(2016, 02, 16))
 
         else:
 
