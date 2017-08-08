@@ -170,9 +170,10 @@ class SentinelSearch(QObject):
         if (self.dlg.s2Extract_checkBox.isChecked() == True
                 and self.dlg.s2Extract_checkBox.isEnabled() == True):
 
-            options.tile = self.dlg.s2Tile_lineEdit.text()
+            options.tile = (self.dlg.s2Tile_lineEdit.text()).upper()
 
         else:
+
             options.tile = None
 
         #
@@ -422,20 +423,6 @@ class SentinelSearch(QObject):
         """Creates a query string for the data hub based on GUI input."""
 
         #
-        # Add tile query check -- made redundant in get_arguments().
-        #
-        if (options.tile != None
-                and (options.sentinel != 'S2'
-                or options.sentinel != 'S2A'
-                or options.sentinel != 'S2B')
-                and self.dlg.s2Extract_checkBox.isChecked()==True):
-
-            message = 'Tile extraction option can only be used for Sentinel-2!'
-            self.text_to_messagebox('Error', message)
-
-            return None
-
-        #
         # Build in checks for valid commands related to the spatial aspect.
         #
         if options.lat is None or options.lon is None:
@@ -629,18 +616,13 @@ class SentinelSearch(QObject):
         else:
             pass
 
-        if options.max_cloud is not None:
+        if (options.max_cloud is not None
+                and (options.sentinel == 'S2'
+                or options.sentinel == 'S2A'
+                or options.sentinel == 'S2B')):
+
             query += ' AND (cloudcoverpercentage:[0.0 TO {}])'.format(
                 options.max_cloud)
-
-        elif (options.max_cloud is not None
-                and (options.sentinel != 'S2'
-                or options.sentinel != 'S2A'
-                or options.sentinel != 'S2B')):
-
-            message = 'Cloud cover is only relevant for Sentinel-2 images.'
-            self.text_to_messagebox('Error.', message)
-            return None
 
         else:
             pass
@@ -766,8 +748,19 @@ class SentinelSearch(QObject):
 
     def get_query_xml(self):
 
+
         try:
             options = self.get_arguments()
+
+            if (options.tile != None
+                    and options.sentinel != 'S2'
+                    and options.sentinel != 'S2A'
+                    and options.sentinel != 'S2B'):
+
+                message = 'Tile extraction option can only be used for {}!'.format(options.sentinel)
+                self.text_to_messagebox('Error', message)
+                #self.enable_btnSearch.emit()
+                #return
 
             if options.user is None or options.password is None:
 
@@ -1019,10 +1012,9 @@ class SentinelSearch(QObject):
                             granules = '---'
 
                         if (options.tile is not None
-                                and granules != '?'
                                 and options.tile not in granules):
 
-                            continue
+                            pass
 
                         else:
 
