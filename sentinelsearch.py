@@ -1185,9 +1185,29 @@ class SentinelSearch(QObject):
             pass
 
 
+    def make_dir(self, location, filename):
+
+        ''' Creates a directory in another directory if it doesn't already exist.'''
+
+        dir_name = '{}/{}'.format(location, filename)
+
+        if not(os.path.exists(dir_name)):
+
+            os.mkdir(dir_name)
+
+        return dir_name
+
+
     def download_results(self):
 
         options = self.get_arguments()
+
+        #
+        # Create download directory if it doesn't yet exist.
+        #
+        if not(os.path.exists(options.write_dir)):
+
+                os.mkdir(options.write_dir)
 
         #
         # Make sure write_dir is formatted properly.
@@ -1200,6 +1220,7 @@ class SentinelSearch(QObject):
 
         elif options.write_dir is not None:
             options.write_dir = (options.write_dir).replace('/', '\\')
+
         elif options.write_dir is None:
             message = 'Please enter a directory to download the data to!'
             self.text_to_messagebox('Error', message)
@@ -1256,71 +1277,15 @@ class SentinelSearch(QObject):
 
                 pass
 
-            else:
+            i = self.download_link(session, zfile, sentinel_link, options.write_dir, i, chunks_to_download)
 
-                target_path = os.path.join(options.write_dir, zfile)
-                chunk_size = 1024*1024*10
-                #
-                # Download file in chunks using requests module.
-                #
-                try:
-                    response = session.get(sentinel_link, stream=True)
-                    with open(target_path, "wb") as handle:
-                        #
-                        # Iterate over content in 10MB chunks.
-                        #
-                        for chunk in response.iter_content(chunk_size):
-
-                            if not chunk:
-                                break
-
-                            if self.killed == True:
-                                # kill request received, exit loop early.
-                                break
-
-                            #
-                            # Update progress bar.
-                            #
-                            i = i + 1
-                            percent = int((i/float(chunks_to_download) * 100))
-                            self.download_progress_set.emit(percent)
-
-                            handle.write(chunk)
-                except:
-                    pass
-
+            if self.killed == True:
+                # kill request received, exit loop early.
+                break
             #
             # Unzip even if path names are really long.
             #
-            if os.path.exists(os.path.join(options.write_dir, zfile)):
-                try:
-                    with zipfile.ZipFile(os.path.join(options.write_dir, zfile)) as z:
-
-                        z.extractall(u'\\\\?\\{}'.format(options.write_dir))
-                        #print 'Unzipped Scene # {}'.format(str(entry + 1))
-
-                except zipfile.BadZipfile:
-                    #print 'Zipfile corrupt or hub might have a problem.'
-                    continue
-
-            elif os.path.exists(os.path.join(options.write_dir, title_element)):
-                try:
-                    with zipfile.ZipFile(os.path.join(options.write_dir, title_element)) as z:
-
-                        z.extractall(u'\\\\?\\{}'.format(options.write_dir))
-                        #print 'Unzipped Scene # {}'.format(str(entry + 1))
-
-                except zipfile.BadZipfile:
-                    #print 'Zipfile corrupt or hub might have a problem.'
-                    continue
-
-            #
-            # If the unzipped and zipped version exist, delete the zipped version.
-            #
-            if (os.path.exists(os.path.join(options.write_dir, filename))
-                    and os.path.exists(os.path.join(options.write_dir, zfile))):
-
-                os.remove(os.path.join(options.write_dir, zfile))
+            self.unzip_result(options.write_dir, filename, zfile, title_element)
 
         #
         # Download Sentinel-2 results.
@@ -1353,72 +1318,23 @@ class SentinelSearch(QObject):
 
                     pass
 
-                else:
+                i = self.download_link(session, zfile, sentinel_link, options.write_dir, i, chunks_to_download)
 
-                    target_path = os.path.join(options.write_dir, zfile)
-                    chunk_size = 1024*1024*10
-                    #
-                    # Download file in chunks using requests module.
-                    #
-                    try:
-                        response = session.get(sentinel_link, stream=True)
-                        with open(target_path, "wb") as handle:
-                            #
-                            # Iterate over content in 10MB chunks.
-                            #
-                            for chunk in response.iter_content(chunk_size):
-                                if not chunk:
-                                    break
-
-                                if self.killed == True:
-                                    # kill request received, exit loop early.
-                                    break
-                                #
-                                # Update progress bar.
-                                #
-                                i = i + 1
-                                percent = int((i/float(chunks_to_download) * 100))
-                                self.download_progress_set.emit(percent)
-                                handle.write(chunk)
-                    except:
-                        pass
+                if self.killed == True:
+                    # kill request received, exit loop early.
+                    break
 
                 #
                 # Unzip folder.zip even if path names are really long.
                 #
-                if os.path.exists(os.path.join(options.write_dir, zfile)):
-                    try:
-                        with zipfile.ZipFile(os.path.join(options.write_dir, zfile)) as z:
+                self.unzip_result(options.write_dir, filename, zfile, title_element)
 
-                            z.extractall(u'\\\\?\\{}'.format(options.write_dir))
-
-
-                    except zipfile.BadZipfile:
-                        #
-                        # Zipfile corrupt or hub might have a problem.
-                        #
-                        continue
-                #
-                # Unzip folder without ''.zip' ending even if long path.
-                #
-                elif os.path.exists(os.path.join(options.write_dir, title_element)):
-                    try:
-                        with zipfile.ZipFile(os.path.join(options.write_dir, title_element)) as z:
-
-                            z.extractall(u'\\\\?\\{}'.format(options.write_dir))
-
-                    except zipfile.BadZipfile:
-
-                        continue
-
-                #
-                # If the unzipped and zipped version exist, delete the zipped version.
-                #
-                if (os.path.exists(os.path.join(options.write_dir, filename))
-                        and os.path.exists(os.path.join(options.write_dir, zfile))):
-
-                    os.remove(os.path.join(options.write_dir, zfile))
-
+        #
+        # If you want to download a tile that you searched for, then it will
+        # create the proper file structure mimicing a complete download and fill it
+        # with data specific to the tile you want, or, post 06.12.16, simply download
+        # complete matching tile packages.
+        #
         elif options.tile is not None:
 
             for row in xrange(0,tW2Rows):
@@ -1428,19 +1344,274 @@ class SentinelSearch(QObject):
                     break
 
                 #
-                # Update progress bar.
+                # Create download command for the entry.
                 #
-                i = i + 1
-                percent = int((i/float(chunks_to_download) * 100))
-                self.download_progress_set.emit(percent)
+                uuid_element = tW2.item(row,11).text()
+                sentinel_link = tW2.item(row,12).text()
+                title_element = tW2.item(row,0).text()
+                filename = '{}.SAFE'.format(title_element)
+                zfile = '{}.zip'.format(title_element)
+                included_tiles = tW2.item(row,1).text()
 
-            #
-            # Add tile extraction code.
-            #
 
+                if (options.tile in included_tiles
+                        and filename.startswith('S2A_OPER_')):
+
+                    #
+                    # Adjust sentinel_link path.
+                    #
+                    sentinel_link = ("{}odata/v1/Products('{}')/Nodes('{}')/Nodes").format(
+                        huburl, uuid_element, filename)
+
+                    #
+                    # Skip files that have already been downloaded.
+                    #
+                    check = self.download_check(options.write_dir, title_element, filename)
+
+                    if check is True:
+
+                        pass
+
+                # File structire--------------------------------------------------
+
+                    product_dir_name = self.make_dir(options.write_dir, filename)
+
+                    #
+                    # Create GRANULE directory in product directory
+                    #
+                    granule_dir = self.make_dir(product_dir_name, 'GRANULE')
+
+                    #
+                    # Create tile directory in GRANULE directory based on tile file name
+                    #
+                    tile_file = self.return_tiles(session, uuid_element, filename, huburl, options.tile)
+
+                    #
+                    # If tile folder already exists, then it skips downloading.
+                    #
+                    # TODO: check if this is redundant to top download_check
+
+                    if os.path.exists(os.path.join(granule_dir, tile_file)):
+
+                        # print 'Tile Folder already downloaded.'
+
+                        continue
+
+                    tile_dir = self.make_dir(granule_dir, tile_file)
+
+                    if self.killed == True:
+                        # kill request received, exit loop early.
+                        break
+
+
+                # Downloads--------------------------------------------------
+
+                    #print 'Downloading from scene #{}'.format(str(entry + 1))
+
+                    #
+                    # Download the product header file after finding the name
+                    #
+                    header_file = self.return_header(session, huburl, uuid_element, filename)
+                    header_link = "{}('{}')/{}".format(
+                        sentinel_link, header_file, value)
+                    i = self.download_link(session, header_file, header_link, product_dir_name, i, chunks_to_download)
+
+                    if self.killed == True:
+                        # kill request received, exit loop early.
+                        break
+
+                    #
+                    # Download INSPIRE.xml
+                    #
+                    inspire_file = 'INSPIRE.xml'
+                    inspire_link = "{}('{}')/{}".format(
+                        sentinel_link, inspire_file, value)
+                    i = self.download_link(session, inspire_file, inspire_link, product_dir_name, i, chunks_to_download)
+
+                    if self.killed == True:
+                        # kill request received, exit loop early.
+                        break
+
+                    #
+                    # Download manifest.safe
+                    #
+                    manifest_file = 'manifest.safe'
+                    manifest_link = "{}('{}')/{}".format(
+                        sentinel_link, manifest_file, value)
+                    i = self.download_link(session, manifest_file, manifest_link, product_dir_name, i, chunks_to_download)
+
+                    if self.killed == True:
+                        # kill request received, exit loop early.
+                        break
+        #
+        #             #
+        #             # Download tile xml file and create AUX_DATA, IMG_DATA and QI_DATA
+        #             # folders in the tile folder and download their contents.
+        #             #
+        #
+        #             # get_tile_files(uuid_element, filename, tile_file, tile_dir)
+        #
+        #             # print 'Downloaded tile {} from scene #{}\n'.format(
+        #             #     options.tile, str(entry + 1))
+        #
+        #
+                elif (options.tile in included_tiles
+                        and (filename.startswith('S2A_MSIL')
+                        or filename.startswith('S2B_MSIL'))):
+
+                    #
+                    # Skip files that have already been downloaded.
+                    #
+                    check = self.download_check(options.write_dir, title_element, filename)
+
+                    if check is True:
+
+                        pass
+
+                    i = self.download_link(session, zfile, sentinel_link, options.write_dir, i, chunks_to_download)
+
+                    if self.killed == True:
+                        # kill request received, exit loop early.
+                        break
+
+                    #
+                    # Unzip folder.zip even if path names are really long.
+                    #
+                    self.unzip_result(options.write_dir, filename, zfile, title_element)
 
         session.close()
         self.finished_download.emit(self.killed)
+
+
+    def unzip_result(self, target_dir, filename, zfile, title_element):
+
+        '''This function checks for zipped copies of results and handles
+            accordingly.'''
+
+        unzipped_path = os.path.join(target_dir, filename)
+        zipped_path = os.path.join(target_dir, zfile)
+        title_path = os.path.join(target_dir, title_element)
+
+        if os.path.exists(zipped_path):
+
+            self.unzip_path(target_dir, zipped_path)
+
+        elif os.path.exists(title_path):
+
+            self.unzip_path(target_dir, title_path)
+
+        #
+        # If the unzipped and zipped version exist, delete the zipped version.
+        #
+        if (os.path.exists(unzipped_path)
+                and os.path.exists(zipped_path)):
+
+            os.remove(zipped_path)
+
+
+    def unzip_path(self, target_dir, zfile_path):
+
+        '''This function unzips a result in linux and windows, even if
+            the pathname is really long.'''
+
+        try:
+
+            with zipfile.ZipFile(zfile_path) as z:
+
+                if (sys.platform.startswith('linux')
+                        or sys.platform.startswith('darwin')):
+
+                    z.extractall(u'{}'.format(target_dir))
+
+                else:
+
+                    z.extractall(u'\\\\?\\{}'.format(target_dir))
+
+        except zipfile.BadZipfile:
+
+            #print 'Zipfile corrupt or hub might have a problem.'
+            # TODO: Add some sort of error exception action.
+            os.remove(zfile_path)
+
+
+    def download_link(self, session, file_toGet, link_toGet, target_folder, i, chunks_to_download):
+
+        target_path = os.path.join(target_folder, file_toGet)
+        chunk_size = 1024*1024*10
+
+        #
+        # Download file in chunks using requests module.
+        #
+        try:
+            response = session.get(link_toGet, stream=True)
+            with open(target_path, "wb") as handle:
+                #
+                # Iterate over content in 10MB chunks.
+                #
+                for chunk in response.iter_content(chunk_size):
+                    if not chunk:
+                        break
+
+                    if self.killed == True:
+                        # kill request received, exit loop early.
+                        break
+                    #
+                    # Update progress bar.
+                    #
+                    i = i + 1
+                    percent = int((i/float(chunks_to_download) * 100))
+                    self.download_progress_set.emit(percent)
+                    handle.write(chunk)
+        except:
+            pass
+
+        return i
+
+
+    def return_header(self, session, huburl, uuid_element, filename):
+
+        ''' Function returns name of header xml incldued in a product.
+            This is used only for pre-December 06, 2016 tile extraction.'''
+
+        #
+        # Create link to search for tile/granule data.
+        #
+        safe_link = ("{}odata/v1/Products"
+            "('{}')/Nodes('{}')/Nodes").format(
+            huburl, uuid_element, filename)
+        #
+        # Create GET request from hub and essentially parse it.
+        #
+        response = session.get(safe_link, stream=True)
+        safe_tree = etree.fromstring(response.content)
+
+        #
+        # Search for all entires.
+        #
+        safe_entries = safe_tree.findall('{http://www.w3.org/2005/Atom}entry')
+
+        #
+        # Go through each entry in the safe folder and return header xml name.
+        #
+        for safe_entry in range(len(safe_entries)):
+
+            #
+            # UUID element creates the path to the file.
+            #
+            safe_name = (safe_entries[safe_entry].find(
+                '{http://www.w3.org/2005/Atom}title')).text
+
+            if 'SAFL1C' in safe_name:
+
+                header_xml = safe_name
+
+                return header_xml
+
+        if not header_xml:
+
+            pass
+            # print 'Header xml could not be located!'
+            # Maybe change to throw some sort of exception?
 
 
     def download_check(self, write_dir, title_element, filename):
@@ -1452,24 +1623,47 @@ class SentinelSearch(QObject):
         # Possible zipped folder name.
         #
         zfile = '{}.zip'.format(title_element)
+        unzipped_path = os.path.join(write_dir, filename)
+        zipped_path = os.path.join(write_dir, zfile)
+        title_path = os.path.join(write_dir, title_element)
 
         #
         # Check if file was already downloaded.
         #
-        if os.path.exists(os.path.join(write_dir, title_element)):
+        if os.path.exists(title_path):
             #print '{} already exists in unzipped form!'.format(title_element)
             return True
-        elif os.path.exists(os.path.join(write_dir, filename)):
+
+        elif os.path.exists(unzipped_path):
             #print '{} already exists in unzipped form!'.format(filename)
             return True
-        elif os.path.exists(os.path.join(write_dir, zfile)):
+
+        elif os.path.exists(zipped_path):
             #print '{} has already been downloaded!'.format(zfile)
-            with zipfile.ZipFile(os.path.join(write_dir, zfile)) as z:
-                z.extractall(u'\\\\?\\{}'.format(write_dir))
-                #print '\tAnd is now unzipped.'
-            os.remove(os.path.join(write_dir, zfile))
-            return True
+            try:
+
+                with zipfile.ZipFile(zipped_path) as z:
+
+                    if (sys.platform.startswith('linux')
+                            or sys.platform.startswith('darwin')):
+
+                        z.extractall(u'{}'.format(write_dir))
+
+                    else:
+
+                        z.extractall(u'\\\\?\\{}'.format(write_dir))
+
+                    os.remove(zipped_path)
+
+                    return True
+
+            except zipfile.BadZipfile:
+                #print 'Zipfile corrupt or hub might have a problem.'
+                os.remove(zipped_path)
+                return False
+
         else:
+
             return False
 
 

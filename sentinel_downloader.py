@@ -462,12 +462,6 @@ class SentinelDownloader:
 
     def download_finished(self, killed=False):
 
-        #
-        # Clear progress bar widget and label.
-        #
-        self.dlg.download_progressBar.reset()
-        self.dlg.download_progressBar.setMinimum(0)
-        # self.set_search_label('')
 
         if killed is False:
 
@@ -485,6 +479,13 @@ class SentinelDownloader:
         #
         self.dlg.btnDownload.setEnabled(True)
         self.dlg.btnDownloadCancel.setEnabled(False)
+
+        #
+        # Clear progress bar widget and label.
+        #
+        self.dlg.download_progressBar.reset()
+        self.dlg.download_progressBar.setMinimum(0)
+        # self.set_search_label('')
 
 
     def text_to_messagebox(self, header, message, long_text=None):
