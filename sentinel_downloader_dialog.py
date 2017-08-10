@@ -153,7 +153,6 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
         self.btnDownloadCancel.setEnabled(False)
         self.btnDownload.setEnabled(True)
 
-
     def adjust_maxRecords(self):
 
         """Adjusts the possible max values based on download hub."""
@@ -194,13 +193,12 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
             self.maxRecords_spinBox.setSingleStep(10)
             self.maxRecords_spinBox.setValue(100)
 
-
     def enable_cloudcover(self):
 
         """Toggles the max cloud cover input field and label depending
             on whether the 'enable' checkbox has been checked."""
 
-        if self.cloudCover_enable.isChecked() == True:
+        if self.cloudCover_enable.isChecked() is True:
             self.cloudCover_spinBox.setEnabled(True)
             self.cloudCover_label.setEnabled(True)
 
@@ -208,13 +206,12 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
             self.cloudCover_spinBox.setEnabled(False)
             self.cloudCover_label.setEnabled(False)
 
-
     def enable_date(self):
 
         """Toggles sensing date input fields and labels depending on whether
             the 'enable' checkbox has been checked."""
 
-        if self.date_enable.isChecked() == True:
+        if self.date_enable.isChecked() is True:
             self.dateFrom_dateEdit.setEnabled(True)
             self.dateTo_dateEdit.setEnabled(True)
             self.dateFrom_label.setEnabled(True)
@@ -226,13 +223,12 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
             self.dateFrom_label.setEnabled(False)
             self.dateTo_label.setEnabled(False)
 
-
     def enable_ingest(self):
 
         """Toggles ingestion date input fields and labels depending on whether
             the 'enable' checkbox has been checked."""
 
-        if self.ingest_enable.isChecked() == True:
+        if self.ingest_enable.isChecked() is True:
             self.ingestFrom_dateEdit.setEnabled(True)
             self.ingestTo_dateEdit.setEnabled(True)
             self.ingestFrom_label.setEnabled(True)
@@ -243,7 +239,6 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
             self.ingestTo_dateEdit.setEnabled(False)
             self.ingestFrom_label.setEnabled(False)
             self.ingestTo_label.setEnabled(False)
-
 
     def enable_platform(self):
 
@@ -274,10 +269,9 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
             self.s2Product_label.setEnabled(True)
             self.s2Product_comboBox.setEnabled(True)
             self.cloudCover_enable.setEnabled(True)
-            if self.cloudCover_enable.isChecked() == True:
+            if self.cloudCover_enable.isChecked() is True:
                 self.cloudCover_spinBox.setEnabled(True)
                 self.cloudCover_label.setEnabled(True)
-
 
         elif (self.sensor_comboBox.currentText() == 'Sentinel-1'
                 or self.sensor_comboBox.currentText() == 'Sentinel-1A'
@@ -329,7 +323,6 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
             self.cloudCover_enable.setEnabled(False)
             self.cloudCover_spinBox.setEnabled(False)
             self.cloudCover_label.setEnabled(False)
-
 
     def enable_tile_search(self):
 
