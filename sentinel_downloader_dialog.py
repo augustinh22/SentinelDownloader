@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+'''
 /***************************************************************************
  SentinelDownloaderDialog
                                  A QGIS plugin
@@ -19,7 +19,7 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-"""
+'''
 
 import os
 
@@ -33,7 +33,9 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
 
     def __init__(self, parent=None):
 
-        """Constructor."""
+        '''
+        Constructor.
+        '''
 
         super(SentinelDownloaderDialog, self).__init__(parent)
         # Set up the user interface from Designer.
@@ -155,7 +157,9 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
 
     def adjust_maxRecords(self):
 
-        """Adjusts the possible max values based on download hub."""
+        '''
+        Adjusts the possible max values based on download hub.
+        '''
 
         if self.hub_comboBox.currentText() == 'Dhus':
             self.maxRecords_spinBox.setMaximum(10)
@@ -195,8 +199,10 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
 
     def enable_cloudcover(self):
 
-        """Toggles the max cloud cover input field and label depending
-            on whether the 'enable' checkbox has been checked."""
+        '''
+        Toggles the max cloud cover input field and label depending
+        on whether the 'enable' checkbox has been checked.
+        '''
 
         if self.cloudCover_enable.isChecked() is True:
             self.cloudCover_spinBox.setEnabled(True)
@@ -208,8 +214,10 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
 
     def enable_date(self):
 
-        """Toggles sensing date input fields and labels depending on whether
-            the 'enable' checkbox has been checked."""
+        '''
+        Toggles sensing date input fields and labels depending on whether
+        the 'enable' checkbox has been checked.
+        '''
 
         if self.date_enable.isChecked() is True:
             self.dateFrom_dateEdit.setEnabled(True)
@@ -225,8 +233,10 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
 
     def enable_ingest(self):
 
-        """Toggles ingestion date input fields and labels depending on whether
-            the 'enable' checkbox has been checked."""
+        '''
+        Toggles ingestion date input fields and labels depending on whether
+        the 'enable' checkbox has been checked.
+        '''
 
         if self.ingest_enable.isChecked() is True:
             self.ingestFrom_dateEdit.setEnabled(True)
