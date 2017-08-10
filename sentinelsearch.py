@@ -7,8 +7,9 @@ from datetime import date
 from datetime import datetime
 import xml.etree.ElementTree as etree
 import qgis
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QDate, Qt, QThread, QObject, pyqtSignal
-from PyQt4.QtGui import QAction, QIcon, QMessageBox, QFileDialog, QTableWidgetItem, QWidget, QProgressBar
+
+from PyQt4.QtCore import QDate, Qt, QObject, pyqtSignal
+from PyQt4.QtGui import QMessageBox, QFileDialog, QTableWidgetItem, QWidget
 
 
 class SentinelSearch(QObject):
@@ -29,20 +30,19 @@ class SentinelSearch(QObject):
         self.dlg = dialog
         self.killed = False
 
-
     def open(self):
 
         """Open file dialog and return selected directory path."""
 
-    	self.fileDialog = QFileDialog()
-    	#self.fileDialog.show()
-    	self.dlg.writeDir_txtPath.setText(self.fileDialog.getExistingDirectory())
-
+        self.fileDialog = QFileDialog()
+        # self.fileDialog.show()
+        self.dlg.writeDir_txtPath.setText(
+            self.fileDialog.getExistingDirectory())
 
     def get_arguments(self):
 
         #
-        # Create options namespace. Perhaps (definitely) bad practice, but whatever.
+        # Create options namespace. Perhaps (definitely) bad practice.
         #
         options = Namespace()
 
@@ -167,8 +167,8 @@ class SentinelSearch(QObject):
         #
         # Sentinel-2 tile name for S2 tile extraction.
         #
-        if (self.dlg.s2Extract_checkBox.isChecked() == True
-                and self.dlg.s2Extract_checkBox.isEnabled() == True):
+        if (self.dlg.s2Extract_checkBox.isChecked() is True
+                and self.dlg.s2Extract_checkBox.isEnabled() is True):
 
             options.tile = (self.dlg.s2Tile_lineEdit.text()).upper()
 
@@ -220,8 +220,10 @@ class SentinelSearch(QObject):
             #
             # Convert sensing dates to proper ISO format.
             #
-            options.start_date = QDate.toString(options.start_date, 'yyyy-MM-dd')
-            options.end_date = QDate.toString(options.end_date, 'yyyy-MM-dd')
+            options.start_date = QDate.toString(
+                options.start_date, 'yyyy-MM-dd')
+            options.end_date = QDate.toString(
+                options.end_date, 'yyyy-MM-dd')
 
         else:
             options.start_date = None
@@ -239,13 +241,13 @@ class SentinelSearch(QObject):
         # Relative or absolute orbit number.
         #
         if (self.dlg.orbit_lineEdit.text() != ''
-                and self.dlg.relOrbit_radioButton.isChecked() == True):
+                and self.dlg.relOrbit_radioButton.isChecked() is True):
 
             options.rel_orbit = self.dlg.orbit_lineEdit.text()
             options.abs_orbit = None
 
         elif (self.dlg.orbit_lineEdit.text() != ''
-                and self.dlg.absOrbit_radioButton.isChecked() == True):
+                and self.dlg.absOrbit_radioButton.isChecked() is True):
 
             options.rel_orbit = None
             options.abs_orbit = self.dlg.orbit_lineEdit.text()
@@ -258,7 +260,7 @@ class SentinelSearch(QObject):
         # S1 product (e.g. GRD, SLC, OCN).
         #
         if (self.dlg.s1Product_comboBox.currentText() != ''
-                and self.dlg.s1Product_comboBox.isEnabled() == True):
+                and self.dlg.s1Product_comboBox.isEnabled() is True):
 
             options.s1product = self.dlg.s1Product_comboBox.currentText()
 
@@ -269,7 +271,7 @@ class SentinelSearch(QObject):
         # S1 polarisation (e.g. HH, VH, HV, VV, HH+HV, VV+VH).
         #
         if (self.dlg.s1Polar_comboBox.currentText() != ''
-                and self.dlg.s1Polar_comboBox.isEnabled() == True):
+                and self.dlg.s1Polar_comboBox.isEnabled() is True):
 
             options.s1polar = self.dlg.s1Polar_comboBox.currentText()
 
@@ -280,7 +282,7 @@ class SentinelSearch(QObject):
         # S1 operational mode (e.g. SM, IW, EW, WV).
         #
         if (self.dlg.s1Mode_comboBox.currentText() != ''
-                and self.dlg.s1Mode_comboBox.isEnabled() == True):
+                and self.dlg.s1Mode_comboBox.isEnabled() is True):
 
             options.s1mode = self.dlg.s1Mode_comboBox.currentText()
 
@@ -291,7 +293,7 @@ class SentinelSearch(QObject):
         # S2 product (e.g. S2MSI1C, S2MSI2Ap).
         #
         if (self.dlg.s2Product_comboBox.currentText() != ''
-                and self.dlg.s2Product_comboBox.isEnabled() == True):
+                and self.dlg.s2Product_comboBox.isEnabled() is True):
 
             options.s2product = self.dlg.s2Product_comboBox.currentText()
 
@@ -302,7 +304,7 @@ class SentinelSearch(QObject):
         # Maximum cloud cover percentage for S2 images.
         #
         if (self.dlg.cloudCover_enable.isChecked()
-                and self.dlg.cloudCover_spinBox.isEnabled() == True):
+                and self.dlg.cloudCover_spinBox.isEnabled() is True):
 
             options.max_cloud = self.dlg.cloudCover_spinBox.cleanText()
 
@@ -311,21 +313,20 @@ class SentinelSearch(QObject):
 
         return options
 
-
-    def args_to_messagebox(self, options, query = None):
+    def args_to_messagebox(self, options, query=None):
 
         options_dict = vars(options)
         options_string = ''
 
-        for key,value in options_dict.iteritems():
+        for key, value in options_dict.iteritems():
 
-            options_string += '{} : {}\n'.format(key,value)
+            options_string += '{} : {}\n'.format(key, value)
 
         msg_args = QMessageBox()
         msg_args.setIcon(QMessageBox.Information)
         msg_args.setText(options_string)
-        #msg_args.setInformativeText("This is additional information")
-        #msg_args.setWindowTitle("MessageBox demo")
+        # msg_args.setInformativeText("This is additional information")
+        # msg_args.setWindowTitle("MessageBox demo")
 
         if query is not None:
 
@@ -333,18 +334,16 @@ class SentinelSearch(QObject):
 
         msg_args.exec_()
 
-
     def text_to_messagebox(self, header, message, long_text=None):
 
         msg_txt = QMessageBox()
         msg_txt.setIcon(QMessageBox.Information)
         msg_txt.setText(message)
-        #msg_txt.setInformativeText("This is additional information")
+        # msg_txt.setInformativeText("This is additional information")
         msg_txt.setWindowTitle(header)
         if long_text is not None:
             msg_txt.setDetailedText(long_text)
         msg_txt.exec_()
-
 
     def get_tile_coords(self):
 
@@ -376,7 +375,6 @@ class SentinelSearch(QObject):
             msg.setWindowTitle('Sentinel-2 Tile Search')
             msg.exec_()
 
-
     def kml_api(self, tile):
 
         """Returns the center point of a defined S2 tile based on an
@@ -384,8 +382,9 @@ class SentinelSearch(QObject):
 
         with requests.Session() as s:
 
-            api_request = ('http://cf000008.geo.sbg.ac.at/cgi-bin/s2-dashboard/'
-                'api.py?centroid={}').format(tile)
+            api_request = (
+                'http://cf000008.geo.sbg.ac.at/cgi-bin/s2-dashboard/api.py?'
+                'centroid={}').format(tile)
 
             try:
 
@@ -402,7 +401,7 @@ class SentinelSearch(QObject):
             # Catch base-class exception.
             #
             except requests.exceptions.RequestException as e:
-                #print '\n\n{}\n\n'.format(e)
+                # print '\n\n{}\n\n'.format(e)
                 result = {"status": "FAIL"}
 
         #
@@ -416,7 +415,6 @@ class SentinelSearch(QObject):
             return 'API failed.'
 
         return coords
-
 
     def create_query(self, options, huburl, maxrecords):
 
@@ -432,12 +430,12 @@ class SentinelSearch(QObject):
                     or options.latmax is None
                     or options.lonmax is None):
 
-                #message = 'Please provide at least one point or rectangle!'
-                #self.text_to_messagebox('Error.', message)
+                # message = 'Please provide at least one point or rectangle!'
+                # self.text_to_messagebox('Error.', message)
 
                 geom = None
 
-                #return None
+                # return None
 
             else:
                 geom = 'rectangle'
@@ -452,11 +450,11 @@ class SentinelSearch(QObject):
                 geom = 'point'
 
             else:
-                #message = 'Choose either a point or rectangle, not both!'
-                #self.text_to_messagebox('Error.', message)
+                # message = 'Choose either a point or rectangle, not both!'
+                # self.text_to_messagebox('Error.', message)
 
                 geom = None
-                #return None
+                # return None
 
         #
         # Instantiate query string.
@@ -485,19 +483,23 @@ class SentinelSearch(QObject):
             if (sys.platform.startswith('linux')
                     or sys.platform.startswith('darwin')):
 
-                query += ('(footprint:\\"Intersects(POLYGON(({lonmin} {latmin}, '
+                query += (
+                    '(footprint:\\"Intersects(POLYGON(({lonmin} {latmin}, '
                     '{lonmax} {latmin}, {lonmax} {latmax}, {lonmin} {latmax}, '
-                    '{lonmin} {latmin})))\\")').format(latmin = options.latmin,
-                    latmax = options.latmax, lonmin = options.lonmin,
-                    lonmax = options.lonmax)
+                    '{lonmin} {latmin})))\\")').format(
+                        latmin=options.latmin,
+                        latmax=options.latmax, lonmin=options.lonmin,
+                        lonmax=options.lonmax)
 
             else:
 
-                query += ('(footprint:"Intersects(POLYGON(({lonmin} {latmin}, '
+                query += (
+                    '(footprint:"Intersects(POLYGON(({lonmin} {latmin}, '
                     '{lonmax} {latmin}, {lonmax} {latmax}, {lonmin} {latmax}, '
-                    '{lonmin} {latmin})))")').format(latmin = options.latmin,
-                    latmax = options.latmax, lonmin = options.lonmin,
-                    lonmax = options.lonmax)
+                    '{lonmin} {latmin})))")').format(
+                        latmin=options.latmin,
+                        latmax=options.latmax, lonmin=options.lonmin,
+                        lonmax=options.lonmax)
         else:
             pass
 
@@ -540,9 +542,11 @@ class SentinelSearch(QObject):
         #
         if options.start_date is not None or options.end_date is not None:
 
-            query += (' AND (beginPosition:[{0}T00:00:00.000Z TO {1}T23:59:59.999Z] '
-                'AND endPosition:[{0}T00:00:00.000Z TO {1}T23:59:59.999Z])').format(
-                options.start_date, options.end_date)
+            query += (
+                ' AND (beginPosition:[{0}T00:00:00.000Z TO {1}T23:59:59.999Z] '
+                'AND endPosition:[{0}T00:00:00.000Z TO {1}T23:59:59.999Z])'
+                    ).format(
+                        options.start_date, options.end_date)
 
         else:
             pass
@@ -550,10 +554,13 @@ class SentinelSearch(QObject):
         #
         # Add database ingestion date.
         #
-        if options.start_ingest_date is not None or options.end_ingest_date is not None:
+        if (options.start_ingest_date is not None
+                or options.end_ingest_date is not None):
 
-            query += (' AND (ingestionDate:[{}T00:00:00.000Z TO {}T23:59:59.999Z])'
-                ).format(options.start_ingest_date, options.end_ingest_date)
+            query += (
+                ' AND (ingestionDate:[{}T00:00:00.000Z TO {}T23:59:59.999Z])'
+                    ).format(
+                        options.start_ingest_date, options.end_ingest_date)
 
         else:
             pass
@@ -617,9 +624,10 @@ class SentinelSearch(QObject):
             pass
 
         if (options.max_cloud is not None
-                and (options.sentinel == 'S2'
-                or options.sentinel == 'S2A'
-                or options.sentinel == 'S2B')):
+                and (
+                    options.sentinel == 'S2'
+                    or options.sentinel == 'S2A'
+                    or options.sentinel == 'S2B')):
 
             query += ' AND (cloudcoverpercentage:[0.0 TO {}])'.format(
                 options.max_cloud)
@@ -662,20 +670,21 @@ class SentinelSearch(QObject):
         #
         if orderby is not None:
 
-            query = '{}search?q=({})&rows={}&{}'.format(huburl, query, maxrecords, orderby)
+            query = '{}search?q=({})&rows={}&{}'.format(
+                huburl, query, maxrecords, orderby)
 
         else:
 
-            query = '{}search?q=({})&rows={}'.format(huburl, query, maxrecords)
+            query = '{}search?q=({})&rows={}'.format(
+                huburl, query, maxrecords)
 
         #
         # Print arguments to message box for test.
         #
-        #self.args_to_messagebox(options, query)
-        #self.text_to_messagebox('Query', query)
+        # self.args_to_messagebox(options, query)
+        # self.text_to_messagebox('Query', query)
 
         return query
-
 
     def start_session(self, options):
 
@@ -730,37 +739,39 @@ class SentinelSearch(QObject):
 
         return session, huburl, account, passwd, maxrecords
 
-
     def set_value(self):
 
         """A place to set platform dependent bits."""
 
         # TODO: platform dependent testing.
 
-        if sys.platform.startswith('linux') or sys.platform.startswith('darwin'):
-            value ='\$value'
+        if (sys.platform.startswith('linux')
+                or sys.platform.startswith('darwin')):
+
+            value = '\$value'
 
         else:
-            value ='$value'
+            value = '$value'
 
         return value
 
-
     def get_query_xml(self):
-
 
         try:
             options = self.get_arguments()
 
-            if (options.tile != None
+            if (options.tile is not None
                     and options.sentinel != 'S2'
                     and options.sentinel != 'S2A'
                     and options.sentinel != 'S2B'):
 
-                message = 'Tile extraction option can only be used for {}!'.format(options.sentinel)
+                message = (
+                    'Tile extraction option can only be used for {}!'
+                    ).format(options.sentinel)
+
                 self.text_to_messagebox('Error', message)
-                #self.enable_btnSearch.emit()
-                #return
+                # self.enable_btnSearch.emit()
+                # return
 
             if options.user is None or options.password is None:
 
@@ -772,7 +783,8 @@ class SentinelSearch(QObject):
             #
             # Create authenticated http session.
             #
-            session, huburl, account, passwd, maxrecords = self.start_session(options)
+            session, huburl, account, passwd, maxrecords = self.start_session(
+                options)
 
             value = self.set_value()
 
@@ -785,11 +797,9 @@ class SentinelSearch(QObject):
             tW1 = self.dlg.s1Results_tableWidget
             tW2 = self.dlg.s2Results_tableWidget
 
-
-            """TODO: add loop to accomodate larger queries of more than 100 records,
-            where start is updated. Max rows are hardcoded or modified to smaller
-            numbers already in create_query()."""
-
+            """TODO: add loop to accomodate larger queries of more than 100
+            records, where start is updated. Max rows are hardcoded or modified
+            to smallernumbers already in create_query()."""
 
             #
             # Create GET request from hub and parse it.
@@ -800,12 +810,15 @@ class SentinelSearch(QObject):
 
             except:
 
-                message = ('Error with connection.\n'
-                    'Please check credentials, try another hub or try again later.')
+                message = (
+                    'Error with connection.\n'
+                    'Please check credentials, try another hub or try again '
+                    'later.')
 
                 self.text_to_messagebox('Error', message)
                 self.enable_btnSearch.emit()
-                #query_tree = etree.parse('C:\Users\GISmachine\Documents\GitHub\AIQ\query_results.xml')
+                # query_tree = etree.parse(
+                #    'C:\Users\GISmachine\Documents\GitHub\AIQ\query_results.xml')
                 return
 
             entries = query_tree.findall('{http://www.w3.org/2005/Atom}entry')
@@ -828,7 +841,7 @@ class SentinelSearch(QObject):
 
             for entry in range(len(entries)):
 
-                if self.killed == True:
+                if self.killed is True:
                     # kill request received, exit loop early.
                     break
                 #
@@ -838,31 +851,32 @@ class SentinelSearch(QObject):
                 percent = int((i/float(len(entries))) * 100)
                 self.search_progress_set.emit(percent)
 
-
                 #
                 # The UUID element is unique for each record and the key
                 # ingredient for creating the path to the file.
                 #
-                uuid_element = (entries[entry].find('{http://www.w3.org/2005/Atom}'
-                    'id')).text
-                title_element = (entries[entry].find('{http://www.w3.org/2005/Atom}'
-                    'title')).text
+                uuid_element = (entries[entry].find(
+                    '{http://www.w3.org/2005/Atom}id')).text
+                title_element = (entries[entry].find(
+                    '{http://www.w3.org/2005/Atom}title')).text
+
                 #
-                # Check both tables for UUID and filename -- skip if already in either table.
+                # Check both tables for UUID and filename.
+                # Skip if already in either table.
                 #
                 tW1_UUIDs = []
                 tW1_fns = []
                 tW1Rows = tW1.rowCount()
-                for row in xrange(0,tW1Rows):
+                for row in xrange(0, tW1Rows):
 
                     #
                     # Try loop to avoid when UUID is None (Database issue)
                     #
                     try:
-                        tw1_col11 = tW1.item(row,11).text()
+                        tw1_col11 = tW1.item(row, 11).text()
                         tW1_UUIDs.append(tw1_col11)
 
-                        tw1_col0 = tW1.item(row,0).text()
+                        tw1_col0 = tW1.item(row, 0).text()
                         tW1_fns.append(tw1_col0)
 
                     except:
@@ -872,16 +886,16 @@ class SentinelSearch(QObject):
                 tW2_UUIDs = []
                 tW2_fns = []
                 tW2Rows = tW2.rowCount()
-                for row in xrange(0,tW2Rows):
+                for row in xrange(0, tW2Rows):
 
                     #
                     # Try loop to avoid when UUID is None (Database issue)
                     #
                     try:
-                        tw2_col11 = tW2.item(row,11).text()
+                        tw2_col11 = tW2.item(row, 11).text()
                         tW2_UUIDs.append(tw2_col11)
 
-                        tw2_col0 = tW2.item(row,0).text()
+                        tw2_col0 = tW2.item(row, 0).text()
                         tW2_fns.append(tw2_col0)
 
                     except:
@@ -900,27 +914,38 @@ class SentinelSearch(QObject):
 
                     continue
                 #
-                # If UUID and titel not in one of the tables, add record to respective table.
+                # If UUID and titel not in one of the tables, add record
+                # to respective table.
                 #
                 else:
 
                     #
                     # The title element contains the corresponding file name.
                     #
-                    filename = (entries[entry].find('.//*[@name="filename"]')).text
-                    size_element = (entries[entry].find('.//*[@name="size"]')).text
-                    rel_orbit = int((entries[entry].find('.//*[@name="relativeorbitnumber"]')).text)
-                    footprint = (entries[entry].find('.//*[@name="footprint"]')).text
-                    sensing_date = ((entries[entry].find('.//*[@name="beginposition"]')).text)[:10]
+                    filename = (entries[entry].find(
+                        './/*[@name="filename"]')).text
+                    size_element = (entries[entry].find(
+                        './/*[@name="size"]')).text
+                    rel_orbit = int((entries[entry].find(
+                        './/*[@name="relativeorbitnumber"]')).text)
+                    footprint = (entries[entry].find(
+                        './/*[@name="footprint"]')).text
+                    sensing_date = ((entries[entry].find(
+                        './/*[@name="beginposition"]')).text)[:10]
                     sentinel_link = ("{}odata/v1/Products('{}')/{}").format(
                         huburl, uuid_element, value)
 
-                    footprint = footprint.replace('POLYGON ((', "").replace('))', "").split(',')
+                    footprint = footprint.replace(
+                        'POLYGON ((', "").replace('))', "").split(',')
+
                     xList = []
                     yList = []
+
                     for coords in footprint:
+
                         xList.append(float(coords.split(' ')[0]))
                         yList.append(float(coords.split(' ')[1]))
+
                     lonmin = float('{0:.2f}'.format(min(xList)))
                     lonmax = float('{0:.2f}'.format(max(xList)))
                     latmin = float('{0:.2f}'.format(min(yList)))
@@ -929,18 +954,30 @@ class SentinelSearch(QObject):
                     if filename.startswith('S1'):
 
                         try:
-                            s1Product = (entries[entry].find('.//*[@name="producttype"]')).text
+
+                            s1Product = (entries[entry].find(
+                                './/*[@name="producttype"]')).text
+
                         except:
+
                             s1Product = '---'
 
                         try:
-                            s1Polar = (entries[entry].find('.//*[@name="polarisationmode"]')).text
+
+                            s1Polar = (entries[entry].find(
+                                './/*[@name="polarisationmode"]')).text
+
                         except:
+
                             s1Polar = '---'
 
                         try:
-                            s1Mode = (entries[entry].find('.//*[@name="sensoroperationalmode"]')).text
+
+                            s1Mode = (entries[entry].find(
+                                './/*[@name="sensoroperationalmode"]')).text
+
                         except:
+
                             s1Mode = '---'
 
                         #
@@ -965,19 +1002,26 @@ class SentinelSearch(QObject):
                     elif filename.startswith('S2'):
 
                         try:
-                            cloud_element = (entries[entry].find('.//*[@name="cloudcoverpercentage"]')
-                                ).text
-                            cloud_element = float('{0:.1f}'.format(float(cloud_element)))
+
+                            cloud_element = (entries[entry].find(
+                                './/*[@name="cloudcoverpercentage"]')).text
+                            cloud_element = float(
+                                '{0:.1f}'.format(float(cloud_element)))
+
                         except:
+
                             cloud_element = '---'
 
                         #
-                        # Return tile names per entry using function return_tiles if desired
+                        # Return tile names per entry using function
+                        # return_tiles if desired.
                         #
                         if filename.startswith('S2A_OPER_'):
 
                             try:
-                                found_tiles = self.return_tiles(session, uuid_element, filename, huburl)
+
+                                found_tiles = self.return_tiles(
+                                    session, uuid_element, filename, huburl)
 
                                 #
                                 # Print the number of tiles and their names.
@@ -990,7 +1034,6 @@ class SentinelSearch(QObject):
                                 numGranules = '---'
                                 granules = '---'
 
-
                         elif (filename.startswith('S2A_MSIL1C_')
                                 or filename.startswith('S2A_MSIL2A_')
                                 or filename.startswith('S2B_MSIL1C_')
@@ -999,7 +1042,8 @@ class SentinelSearch(QObject):
                             try:
 
                                 numGranules = 1
-                                granules = (entries[entry].find('.//*[@name="tileid"]')).text
+                                granules = (entries[entry].find(
+                                    './/*[@name="tileid"]')).text
 
                             except:
 
@@ -1038,7 +1082,8 @@ class SentinelSearch(QObject):
                             self.add_to_table(tW2, sentinel_link, c, 12)
 
             total_size = self.return_total_size(tW1, tW2)
-            #self.text_to_messagebox('Results.', 'Total size of results: {}'.format(total_size))
+            # self.text_to_messagebox(
+            #    'Results.', 'Total size of results: {}'.format(total_size))
             size_message = 'Total size of results: {}'.format(total_size)
             self.set_message.emit(size_message)
             session.close()
@@ -1050,7 +1095,6 @@ class SentinelSearch(QObject):
 
         self.finished.emit(self.killed)
 
-
     def return_total_size(self, tW1, tW2):
 
         #
@@ -1059,26 +1103,38 @@ class SentinelSearch(QObject):
         total_size = 0
 
         tW1Rows = tW1.rowCount()
-        for row in xrange(0,tW1Rows):
-            size_element = tW1.item(row,6).text()
+
+        for row in xrange(0, tW1Rows):
+
+            size_element = tW1.item(row, 6).text()
+
             if 'GB' in size_element:
+
                 size_element = size_element.replace(' GB', '')
                 size_element = float(size_element)
                 total_size += size_element
+
             elif 'MB' in size_element:
+
                 size_element = size_element.replace(' MB', '')
                 size_element = float(size_element) / 1024
                 size_element = size_element
                 total_size += size_element
 
         tW2Rows = tW2.rowCount()
-        for row in xrange(0,tW2Rows):
-            size_element = tW2.item(row,6).text()
+
+        for row in xrange(0, tW2Rows):
+
+            size_element = tW2.item(row, 6).text()
+
             if 'GB' in size_element:
+
                 size_element = size_element.replace(' GB', '')
                 size_element = float(size_element)
                 total_size += size_element
+
             elif 'MB' in size_element:
+
                 size_element = size_element.replace(' MB', '')
                 size_element = float(size_element) / 1024
                 size_element = size_element
@@ -1088,18 +1144,18 @@ class SentinelSearch(QObject):
 
         return total_size
 
-
     def return_tiles(self, session, uuid_element, filename, huburl, tile=''):
 
         '''Function returns tiles incldued in the GRANULE folder of a product,
-           including the entire file name of one desired tile, if specified. '''
+           including the entire file name of one desired tile, if specified.'''
 
         #
         # Create link to search for tile/granule data.
         #
-        granule_link = ("{}odata/v1/Products"
+        granule_link = (
+            "{}odata/v1/Products"
             "('{}')/Nodes('{}')/Nodes('GRANULE')/Nodes").format(
-            huburl, uuid_element, filename)
+                huburl, uuid_element, filename)
 
         #
         # Create GET request from hub and parse it.
@@ -1110,7 +1166,8 @@ class SentinelSearch(QObject):
         #
         # Search for all entires (i.e. tiles)
         #
-        granule_entries = granule_tree.findall('{http://www.w3.org/2005/Atom}entry')
+        granule_entries = granule_tree.findall(
+            '{http://www.w3.org/2005/Atom}entry')
 
         #
         # Empty string to fill with all tiles in the file.
@@ -1131,12 +1188,16 @@ class SentinelSearch(QObject):
             granules += ' {}'.format(granule)
 
             #
-            # If one tile is given as an optional arg, return entire tile file name.
+            # If one tile is given as an optional arg, return tile file name.
             #
             if tile != '':
+
                 if tile in granule_dir_name:
+
                     granule_file = granule_dir_name
+
             else:
+
                 granule_file = ''
 
         #
@@ -1149,7 +1210,6 @@ class SentinelSearch(QObject):
         else:
             return(granule_file)
 
-
     def add_to_table(self, table, item, row, column):
 
         itMID = QTableWidgetItem()
@@ -1157,7 +1217,6 @@ class SentinelSearch(QObject):
         itMID.setData(Qt.DisplayRole, item)
 
         table.setItem(row, column, itMID)
-
 
     def clearTable(self):
 
@@ -1169,25 +1228,33 @@ class SentinelSearch(QObject):
         caption = 'Clear results.'
         message = 'Would you like to clear all results?'
         i = QWidget()
-        q = QMessageBox.question(i, caption, message, QMessageBox.Yes, QMessageBox.No)
+        q = QMessageBox.question(
+            i, caption, message, QMessageBox.Yes, QMessageBox.No)
 
         if q == QMessageBox.Yes:
+
             tW1 = self.dlg.s1Results_tableWidget
             tW2 = self.dlg.s2Results_tableWidget
             tW1.clearContents()
+
             for i in range(0, tW1.rowCount()):
+
                 tW1.removeRow(0)
+
             tW2.clearContents()
+
             for i in range(0, tW2.rowCount()):
+
                 tW2.removeRow(0)
 
         if q == QMessageBox.No:
-            pass
 
+            pass
 
     def make_dir(self, location, filename):
 
-        ''' Creates a directory in another directory if it doesn't already exist.'''
+        ''' Creates a directory in another directory if it doesn't
+            already exist.'''
 
         dir_name = '{}/{}'.format(location, filename)
 
@@ -1196,7 +1263,6 @@ class SentinelSearch(QObject):
             os.mkdir(dir_name)
 
         return dir_name
-
 
     def download_results(self):
 
@@ -1231,7 +1297,8 @@ class SentinelSearch(QObject):
         #
         # Create authenticated http session.
         #
-        session, huburl, account, passwd, maxrecords = self.start_session(options)
+        session, huburl, account, passwd, maxrecords = self.start_session(
+            options)
 
         #
         # Platform dependent stuff.
@@ -1257,35 +1324,39 @@ class SentinelSearch(QObject):
         #
         # Download Sentinel-1 results from S1 table.
         #
-        for row in xrange(0,tW1Rows):
+        for row in xrange(0, tW1Rows):
 
-            if self.killed == True:
+            if self.killed is True:
                 # kill request received, exit loop early.
                 break
 
-            sentinel_link = tW1.item(row,12).text()
-            title_element = tW1.item(row,0).text()
+            sentinel_link = tW1.item(row, 12).text()
+            title_element = tW1.item(row, 0).text()
             filename = '{}.SAFE'.format(title_element)
             zfile = '{}.zip'.format(title_element)
 
             #
             # Skip files that have already been downloaded.
             #
-            check = self.download_check(options.write_dir, title_element, filename)
+            check = self.download_check(
+                options.write_dir, title_element, filename)
 
             if check is True:
 
                 pass
 
-            i = self.download_link(session, zfile, sentinel_link, options.write_dir, i, chunks_to_download)
+            i = self.download_link(
+                session, zfile, sentinel_link, options.write_dir, i,
+                chunks_to_download)
 
-            if self.killed == True:
+            if self.killed is True:
                 # kill request received, exit loop early.
                 break
             #
             # Unzip even if path names are really long.
             #
-            self.unzip_result(options.write_dir, filename, zfile, title_element)
+            self.unzip_result(
+                options.write_dir, filename, zfile, title_element)
 
         #
         # Download Sentinel-2 results.
@@ -1295,64 +1366,67 @@ class SentinelSearch(QObject):
         #
         if options.tile is None:
 
-            for row in xrange(0,tW2Rows):
+            for row in xrange(0, tW2Rows):
 
-                if self.killed == True:
+                if self.killed is True:
                     # kill request received, exit loop early.
                     break
 
                 #
                 # Create download command for the entry.
                 #
-                sentinel_link = tW2.item(row,12).text()
-                title_element = tW2.item(row,0).text()
+                sentinel_link = tW2.item(row, 12).text()
+                title_element = tW2.item(row, 0).text()
                 filename = '{}.SAFE'.format(title_element)
                 zfile = '{}.zip'.format(title_element)
 
                 #
                 # Skip files that have already been downloaded.
                 #
-                check = self.download_check(options.write_dir, title_element, filename)
+                check = self.download_check(
+                    options.write_dir, title_element, filename)
 
                 if check is True:
 
                     pass
 
-                i = self.download_link(session, zfile, sentinel_link, options.write_dir, i, chunks_to_download)
+                i = self.download_link(
+                    session, zfile, sentinel_link, options.write_dir, i,
+                    chunks_to_download)
 
-                if self.killed == True:
+                if self.killed is True:
                     # kill request received, exit loop early.
                     break
 
                 #
                 # Unzip folder.zip even if path names are really long.
                 #
-                self.unzip_result(options.write_dir, filename, zfile, title_element)
+                self.unzip_result(
+                    options.write_dir, filename, zfile, title_element)
 
         #
         # If you want to download a tile that you searched for, then it will
-        # create the proper file structure mimicing a complete download and fill it
-        # with data specific to the tile you want, or, post 06.12.16, simply download
-        # complete matching tile packages.
+        # create the proper file structure mimicing a complete download and
+        # fill it with data specific to the tile you want, or, post 06.12.16,
+        # simply download complete matching tile packages.
         #
         elif options.tile is not None:
 
-            for row in xrange(0,tW2Rows):
+            for row in xrange(0, tW2Rows):
 
-                if self.killed == True:
+                if self.killed is True:
                     # kill request received, exit loop early.
                     break
 
                 #
                 # Create download command for the entry.
                 #
-                uuid_element = tW2.item(row,11).text()
-                sentinel_link = tW2.item(row,12).text()
-                title_element = tW2.item(row,0).text()
+                uuid_element = tW2.item(row, 11).text()
+                sentinel_link = tW2.item(row, 12).text()
+                title_element = tW2.item(row, 0).text()
                 filename = '{}.SAFE'.format(title_element)
                 zfile = '{}.zip'.format(title_element)
-                included_tiles = tW2.item(row,1).text()
-
+                included_tiles = tW2.item(row, 1).text()
 
                 if (options.tile in included_tiles
                         and filename.startswith('S2A_OPER_')):
@@ -1360,31 +1434,35 @@ class SentinelSearch(QObject):
                     #
                     # Adjust sentinel_link path.
                     #
-                    sentinel_link = ("{}odata/v1/Products('{}')/Nodes('{}')/Nodes").format(
-                        huburl, uuid_element, filename)
+                    sentinel_link = (
+                        "{}odata/v1/Products('{}')/Nodes('{}')/Nodes").format(
+                            huburl, uuid_element, filename)
 
                     #
                     # Skip files that have already been downloaded.
                     #
-                    check = self.download_check(options.write_dir, title_element, filename)
+                    check = self.download_check(
+                        options.write_dir, title_element, filename)
 
                     if check is True:
 
                         pass
 
-                # File structire--------------------------------------------------
+                # File structire---------------------------------------------
 
-                    product_dir_name = self.make_dir(options.write_dir, filename)
+                    product_dir_name = self.make_dir(
+                        options.write_dir, filename)
 
                     #
-                    # Create GRANULE directory in product directory
+                    # Create GRANULE directory in product directory.
                     #
                     granule_dir = self.make_dir(product_dir_name, 'GRANULE')
 
                     #
-                    # Create tile directory in GRANULE directory based on tile file name
+                    # Create tile dir in GRANULE dir based on tile file name.
                     #
-                    tile_file = self.return_tiles(session, uuid_element, filename, huburl, options.tile)
+                    tile_file = self.return_tiles(
+                        session, uuid_element, filename, huburl, options.tile)
 
                     #
                     # If tile folder already exists, then it skips downloading.
@@ -1399,24 +1477,26 @@ class SentinelSearch(QObject):
 
                     tile_dir = self.make_dir(granule_dir, tile_file)
 
-                    if self.killed == True:
+                    if self.killed is True:
                         # kill request received, exit loop early.
                         break
 
-
                 # Downloads--------------------------------------------------
 
-                    #print 'Downloading from scene #{}'.format(str(entry + 1))
+                    # print 'Downloading from scene #{}'.format(str(entry + 1))
 
                     #
                     # Download the product header file after finding the name
                     #
-                    header_file = self.return_header(session, huburl, uuid_element, filename)
+                    header_file = self.return_header(
+                        session, huburl, uuid_element, filename)
                     header_link = "{}('{}')/{}".format(
                         sentinel_link, header_file, value)
-                    i = self.download_link(session, header_file, header_link, product_dir_name, i, chunks_to_download)
+                    i = self.download_link(
+                        session, header_file, header_link, product_dir_name, i,
+                        chunks_to_download)
 
-                    if self.killed == True:
+                    if self.killed is True:
                         # kill request received, exit loop early.
                         break
 
@@ -1426,9 +1506,11 @@ class SentinelSearch(QObject):
                     inspire_file = 'INSPIRE.xml'
                     inspire_link = "{}('{}')/{}".format(
                         sentinel_link, inspire_file, value)
-                    i = self.download_link(session, inspire_file, inspire_link, product_dir_name, i, chunks_to_download)
+                    i = self.download_link(
+                        session, inspire_file, inspire_link,
+                        product_dir_name, i, chunks_to_download)
 
-                    if self.killed == True:
+                    if self.killed is True:
                         # kill request received, exit loop early.
                         break
 
@@ -1438,52 +1520,61 @@ class SentinelSearch(QObject):
                     manifest_file = 'manifest.safe'
                     manifest_link = "{}('{}')/{}".format(
                         sentinel_link, manifest_file, value)
-                    i = self.download_link(session, manifest_file, manifest_link, product_dir_name, i, chunks_to_download)
+                    i = self.download_link(
+                        session, manifest_file, manifest_link,
+                        product_dir_name, i, chunks_to_download)
 
-                    if self.killed == True:
+                    if self.killed is True:
                         # kill request received, exit loop early.
                         break
 
                     #
-                    # Download tile xml file and create AUX_DATA, IMG_DATA and QI_DATA
+                    # Download tile xml and create AUX_DATA, IMG_DATA, QI_DATA
                     # folders in the tile folder and download their contents.
                     #
 
-                    i = self.get_tile_files(session, huburl, value, uuid_element, filename, tile_file, tile_dir, i, chunks_to_download)
+                    i = self.get_tile_files(
+                        session, huburl, value, uuid_element, filename,
+                        tile_file, tile_dir, i, chunks_to_download)
 
                     # print 'Downloaded tile {} from scene #{}\n'.format(
                     #     options.tile, str(entry + 1))
 
-
                 elif (options.tile in included_tiles
-                        and (filename.startswith('S2A_MSIL')
-                        or filename.startswith('S2B_MSIL'))):
+                        and (
+                            filename.startswith('S2A_MSIL')
+                            or filename.startswith('S2B_MSIL'))):
 
                     #
                     # Skip files that have already been downloaded.
                     #
-                    check = self.download_check(options.write_dir, title_element, filename)
+                    check = self.download_check(
+                        options.write_dir, title_element, filename)
 
                     if check is True:
 
                         pass
 
-                    i = self.download_link(session, zfile, sentinel_link, options.write_dir, i, chunks_to_download)
+                    i = self.download_link(
+                        session, zfile, sentinel_link, options.write_dir, i,
+                        chunks_to_download)
 
-                    if self.killed == True:
+                    if self.killed is True:
                         # kill request received, exit loop early.
                         break
 
                     #
                     # Unzip folder.zip even if path names are really long.
                     #
-                    self.unzip_result(options.write_dir, filename, zfile, title_element)
+                    self.unzip_result(
+                        options.write_dir, filename, zfile, title_element)
 
         session.close()
         self.finished_download.emit(self.killed)
 
-
-    def get_tile_files(self, session, huburl, value, uuid_element, filename, tile_file, tile_dir, i, chunks_to_download):
+    def get_tile_files(
+            self, session, huburl, value, uuid_element, filename, tile_file,
+            tile_dir, i, chunks_to_download):
 
         ''' Creates structure for tile specific download (tile inside GRANULE
            folder), and fills it.'''
@@ -1491,12 +1582,13 @@ class SentinelSearch(QObject):
         #
         # Define link to tile folder in data hub.
         #
-        tile_folder_link = ("{}odata/v1/Products"
-            "('{}')/Nodes('{}')/Nodes('GRANULE')/Nodes('{}')/Nodes").format(
-            huburl, uuid_element, filename, tile_file)
+        tile_folder_link = (
+            "{}odata/v1/Products('{}')/Nodes('{}')/Nodes('GRANULE')/Nodes"
+            "('{}')/Nodes").format(
+                huburl, uuid_element, filename, tile_file)
 
         #
-        # Connect to the server and stream the metadata as a string, parsing it.
+        # Connect to server and stream the metadata as a string, parsing it.
         #
         response = session.get(tile_folder_link, stream=True)
         tile_folder_tree = etree.fromstring(response.content)
@@ -1508,9 +1600,13 @@ class SentinelSearch(QObject):
             '{http://www.w3.org/2005/Atom}entry'))
 
         #
-        # Go through each entry and identify necessary information for download.
+        # Go through each entry and identify information for download.
         #
         for tile_folder_entry in range(len(tile_folder_entries)):
+
+            if self.killed is True:
+                # kill request received, exit loop early.
+                break
 
             tile_entry_title = (tile_folder_entries[tile_folder_entry].find(
                 '{http://www.w3.org/2005/Atom}title')).text
@@ -1526,7 +1622,9 @@ class SentinelSearch(QObject):
                 tile_xml_file = tile_entry_title
                 tile_xml_link = '{}/{}'.format(tile_entry_id, value)
 
-                i = self.download_link(session, tile_xml_file, tile_xml_link, tile_dir, i, chunks_to_download)
+                i = self.download_link(
+                    session, tile_xml_file, tile_xml_link, tile_dir, i,
+                    chunks_to_download)
 
             else:
 
@@ -1534,12 +1632,15 @@ class SentinelSearch(QObject):
                 # Create folder for files and go get them
                 #
                 inside_folder_dir = self.make_dir(tile_dir, tile_entry_title)
-                i = self.get_inside_files(session, value, inside_folder_dir, tile_entry_id, i, chunks_to_download)
+                i = self.get_inside_files(
+                    session, value, inside_folder_dir, tile_entry_id, i,
+                    chunks_to_download)
 
         return i
 
-
-    def get_inside_files(self, session, value, inside_folder_dir, tile_entry_id, i, chunks_to_download):
+    def get_inside_files(
+            self, session, value, inside_folder_dir, tile_entry_id, i,
+            chunks_to_download):
 
         ''' Go deeper in the element tree and download contents to the specified
            folder. This is relevant for tile specific downloads in the old file
@@ -1563,17 +1664,24 @@ class SentinelSearch(QObject):
         #
         for inside_folder_entry in range(len(inside_folder_entries)):
 
-            inside_entry_title = (inside_folder_entries[inside_folder_entry].find(
-                '{http://www.w3.org/2005/Atom}title')).text
-            inside_entry_id = (inside_folder_entries[inside_folder_entry].find(
-                '{http://www.w3.org/2005/Atom}id')).text
+            if self.killed is True:
+                # kill request received, exit loop early.
+                break
+
+            inside_entry_title = (
+                inside_folder_entries[inside_folder_entry].find(
+                    '{http://www.w3.org/2005/Atom}title')).text
+            inside_entry_id = (
+                inside_folder_entries[inside_folder_entry].find(
+                    '{http://www.w3.org/2005/Atom}id')).text
             inside_entry_file = inside_entry_title
             inside_entry_link = '{}/{}'.format(inside_entry_id, value)
 
-            i = self.download_link(session, inside_entry_file, inside_entry_link, inside_folder_dir, i, chunks_to_download)
+            i = self.download_link(
+                session, inside_entry_file, inside_entry_link,
+                inside_folder_dir, i, chunks_to_download)
 
         return i
-
 
     def unzip_result(self, target_dir, filename, zfile, title_element):
 
@@ -1600,7 +1708,6 @@ class SentinelSearch(QObject):
 
             os.remove(zipped_path)
 
-
     def unzip_path(self, target_dir, zfile_path):
 
         '''This function unzips a result in linux and windows, even if
@@ -1621,12 +1728,13 @@ class SentinelSearch(QObject):
 
         except zipfile.BadZipfile:
 
-            #print 'Zipfile corrupt or hub might have a problem.'
+            # print 'Zipfile corrupt or hub might have a problem.'
             # TODO: Add some sort of error exception action.
             os.remove(zfile_path)
 
-
-    def download_link(self, session, file_toGet, link_toGet, target_folder, i, chunks_to_download):
+    def download_link(
+            self, session, file_toGet, link_toGet, target_folder, i,
+            chunks_to_download):
 
         target_path = os.path.join(target_folder, file_toGet)
         chunk_size = 1024*1024*10
@@ -1644,7 +1752,7 @@ class SentinelSearch(QObject):
                     if not chunk:
                         break
 
-                    if self.killed == True:
+                    if self.killed is True:
                         # kill request received, exit loop early.
                         break
                     #
@@ -1654,11 +1762,11 @@ class SentinelSearch(QObject):
                     percent = int((i/float(chunks_to_download) * 100))
                     self.download_progress_set.emit(percent)
                     handle.write(chunk)
+
         except:
             pass
 
         return i
-
 
     def return_header(self, session, huburl, uuid_element, filename):
 
@@ -1668,9 +1776,9 @@ class SentinelSearch(QObject):
         #
         # Create link to search for tile/granule data.
         #
-        safe_link = ("{}odata/v1/Products"
-            "('{}')/Nodes('{}')/Nodes").format(
-            huburl, uuid_element, filename)
+        safe_link = (
+            "{}odata/v1/Products('{}')/Nodes('{}')/Nodes").format(
+                huburl, uuid_element, filename)
         #
         # Create GET request from hub and essentially parse it.
         #
@@ -1705,7 +1813,6 @@ class SentinelSearch(QObject):
             # print 'Header xml could not be located!'
             # Maybe change to throw some sort of exception?
 
-
     def download_check(self, write_dir, title_element, filename):
 
         ''' Function checks if files have aleady been downloaded. If yes, but
@@ -1723,15 +1830,15 @@ class SentinelSearch(QObject):
         # Check if file was already downloaded.
         #
         if os.path.exists(title_path):
-            #print '{} already exists in unzipped form!'.format(title_element)
+            # print '{} already exists in unzipped form!'.format(title_element)
             return True
 
         elif os.path.exists(unzipped_path):
-            #print '{} already exists in unzipped form!'.format(filename)
+            # print '{} already exists in unzipped form!'.format(filename)
             return True
 
         elif os.path.exists(zipped_path):
-            #print '{} has already been downloaded!'.format(zfile)
+            # print '{} has already been downloaded!'.format(zfile)
             try:
 
                 with zipfile.ZipFile(zipped_path) as z:
@@ -1750,7 +1857,7 @@ class SentinelSearch(QObject):
                     return True
 
             except zipfile.BadZipfile:
-                #print 'Zipfile corrupt or hub might have a problem.'
+                # print 'Zipfile corrupt or hub might have a problem.'
                 os.remove(zipped_path)
                 return False
 
@@ -1758,16 +1865,17 @@ class SentinelSearch(QObject):
 
             return False
 
-
     def remove_selected(self):
 
-		#
+        #
         # Ask for confirmation.
         #
         caption = 'Remove rows.'
-        message = 'Are you sure you want to remove highlighted rows from the table?'
+        message = (
+            'Are you sure you want to remove highlighted rows from the table?')
         i = QWidget()
-        q = QMessageBox.question(i, caption, message, QMessageBox.Yes, QMessageBox.No)
+        q = QMessageBox.question(
+            i, caption, message, QMessageBox.Yes, QMessageBox.No)
 
         #
         # If yes, delete selection.
@@ -1782,7 +1890,6 @@ class SentinelSearch(QObject):
         else:
             pass
 
-
     def removeRowsFromTable(self, table):
 
         tW = table
@@ -1791,10 +1898,11 @@ class SentinelSearch(QObject):
         #
         # List of entries to remove (single cell selections count!).
         #
-        rows  = []
+        rows = []
+
         for i in tW.selectedIndexes():
 
-        	rows.append(i.row())
+            rows.append(i.row())
 
         v = list(set(rows))
 
@@ -1803,126 +1911,7 @@ class SentinelSearch(QObject):
         #
         for i in reversed(range(0, len(v))):
 
-        	tW.removeRow(v[i])
-
-    #
-    # def get_S1download_links(self):
-    #
-    #     options = self.get_arguments()
-    #
-    #     S1_links = []
-    #
-    #     #
-    #     # Define data tables for S1 and S2 results.
-    #     #
-    #     tW1 = self.dlg.s1Results_tableWidget
-    #
-    #     #
-    #     # Download Sentinel-1 results from S1 table.
-    #     #
-    #     tW1Rows = tW1.rowCount()
-    #     for row in xrange(0,tW1Rows):
-    #
-    #         sentinel_link = tW1.item(row,12).text()
-    #
-    #         S1_links.append(sentinel_link)
-    #
-    #     return S1_links
-    #
-    #
-    # def download_S1links(self, sentinel_link):
-    #
-    #     options = self.get_arguments()
-    #
-    #     #
-    #     # Make sure write_dir is formatted properly.
-    #     #
-    #     if (sys.platform.startswith('linux')
-    #             or sys.platform.startswith('darwin')
-    #             and options.write_dir is not None):
-    #         # Add whatever might be necessary here.
-    #         pass
-    #
-    #     elif options.write_dir is not None:
-    #         options.write_dir = (options.write_dir).replace('/', '\\')
-    #     elif options.write_dir is None:
-    #         message = 'Please enter a directory to download the data to!'
-    #         self.text_to_messagebox('Error', message)
-    #         return None
-    #     else:
-    #         pass
-    #
-    #     #
-    #     # Define data tables for S1 and S2 results.
-    #     #
-    #     tW1 = self.dlg.s1Results_tableWidget
-    #
-    #     #
-    #     # Create authenticated http session.
-    #     #
-    #     session, huburl, account, passwd, maxrecords = self.start_session(options)
-    #
-    #     #
-    #     # Platform dependent stuff.
-    #     #
-    #     value = self.set_value()
-    #
-    #     tW1Rows = tW1.rowCount()
-    #     for row in xrange(0,tW1Rows):
-    #
-    #         entry_sentinel_link = tW1.item(row,12).text()
-    #
-    #         if sentinel_link == entry_sentinel_link:
-    #
-    #             title_element = tW1.item(row,0).text()
-    #             filename = '{}.SAFE'.format(title_element)
-    #             zfile = '{}.zip'.format(title_element)
-    #             break
-    #
-    #     #
-    #     # Skip files that have already been downloaded.
-    #     #
-    #     check = self.download_check(options.write_dir, title_element, filename)
-    #
-    #     if check is True:
-    #
-    #         pass
-    #
-    #     else:
-    #         target_path = os.path.join(options.write_dir, zfile)
-    #         chunk_size = 1024*1024*10
-    #         #
-    #         # Download file in chunks using requests module.
-    #         #
-    #         try:
-    #             response = session.get(sentinel_link, stream=True)
-    #             with open(target_path, "wb") as handle:
-    #                 #
-    #                 # Iterate over content in 10MB chunks.
-    #                 #
-    #                 for chunk in response.iter_content(chunk_size):
-    #
-    #                     if not chunk:
-    #                         break
-    #
-    #                     handle.write(chunk)
-    #         except:
-    #             pass
-    #
-    #
-    # def download_onlyS1(self):
-    #
-    #     S1_links = self.get_S1download_links()
-    #     # link_string = ''
-    #     # link_string = ','.join(S1_links)
-    #     # self.text_to_messagebox('Error', link_string)
-    #
-    #     # with mp.Pool(2) as p:
-    #     #     p.map(self.download_S1links, S1_links)
-    #
-    #     self.finished_S1download.emit(self.killed)
-    #
-    #
+            tW.removeRow(v[i])
 
 
 #
