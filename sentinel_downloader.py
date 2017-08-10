@@ -31,8 +31,9 @@ from datetime import date
 from datetime import datetime
 import xml.etree.ElementTree as etree
 import qgis
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QDate, Qt, QThread
-from PyQt4.QtGui import QAction, QIcon, QMessageBox, QFileDialog, QTableWidgetItem, QWidget, QProgressBar
+from PyQt4.QtCore import (
+    QSettings, QTranslator, qVersion, QCoreApplication, QDate, Qt, QThread)
+from PyQt4.QtGui import QAction, QIcon, QMessageBox, QWidget
 # Initialize Qt resources from file resources.py
 import resources
 # Import the code for the dialog
@@ -98,7 +99,6 @@ class SentinelDownloader:
         self.toolbar = self.iface.addToolBar(u'SentinelDownloader')
         self.toolbar.setObjectName(u'SentinelDownloader')
 
-
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
@@ -114,18 +114,18 @@ class SentinelDownloader:
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('SentinelDownloader', message)
 
-
     def add_action(
-        self,
-        icon_path,
-        text,
-        callback,
-        enabled_flag=True,
-        add_to_menu=True,
-        add_to_toolbar=True,
-        status_tip=None,
-        whats_this=None,
-        parent=None):
+            self,
+            icon_path,
+            text,
+            callback,
+            enabled_flag=True,
+            add_to_menu=True,
+            add_to_toolbar=True,
+            status_tip=None,
+            whats_this=None,
+            parent=None):
+
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -204,14 +204,14 @@ class SentinelDownloader:
         self.dlg.btnSearchCancel.clicked.connect(self.kill)
         self.dlg.btnReset.clicked.connect(self.reset_parameters)
         self.dlg.btnTileSearch.clicked.connect(self.downloader.get_tile_coords)
-        self.dlg.btnClearSelected.clicked.connect(self.downloader.remove_selected)
+        self.dlg.btnClearSelected.clicked.connect(
+            self.downloader.remove_selected)
         self.dlg.btnDownload.clicked.connect(self.download_thread)
-        #self.dlg.btnDownload.clicked.connect(self.download_S1thread)
+        # self.dlg.btnDownload.clicked.connect(self.download_S1thread)
         self.dlg.btnDownloadCancel.clicked.connect(self.kill)
         self.dlg.btnClear.clicked.connect(self.downloader.clearTable)
 
         return action
-
 
     def initGui(self):
 
@@ -224,7 +224,6 @@ class SentinelDownloader:
             callback=self.run,
             parent=self.iface.mainWindow())
 
-
     def unload(self):
 
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -236,7 +235,6 @@ class SentinelDownloader:
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
-
 
     def run(self):
 
@@ -278,8 +276,8 @@ class SentinelDownloader:
         #
         # Transform coordinates
         #
-        ULX_new,ULY_new = pyproj.transform(inProj,outProj,ULX,ULY)
-        LLX_new,LLY_new = pyproj.transform(inProj,outProj,LLX,LLY)
+        ULX_new, ULY_new = pyproj.transform(inProj, outProj, ULX, ULY)
+        LLX_new, LLY_new = pyproj.transform(inProj, outProj, LLX, LLY)
 
         #
         # Set values.
@@ -288,7 +286,6 @@ class SentinelDownloader:
         self.dlg.ULX_lineEdit.setText(str('{0:.2f}'.format(ULX_new)))
         self.dlg.LLY_lineEdit.setText(str('{0:.2f}'.format(LLY_new)))
         self.dlg.ULY_lineEdit.setText(str('{0:.2f}'.format(ULY_new)))
-
 
     def search_thread(self):
 
@@ -316,7 +313,6 @@ class SentinelDownloader:
         self.worker.set_message.connect(self.set_messageBar)
         self.worker.finished.connect(self.search_finished)
 
-
     def set_search_label(self, text):
 
         self.dlg.search_label.setText(text)
@@ -327,7 +323,6 @@ class SentinelDownloader:
             #
             self.dlg.search_progressBar.setMinimum(0)
             self.dlg.search_progressBar.setMaximum(0)
-
 
     def set_progress_max(self, max_value):
 
@@ -342,7 +337,6 @@ class SentinelDownloader:
             self.dlg.search_progressBar.setMinimum(0)
             self.dlg.search_progressBar.setMaximum(100)
 
-
     def set_progress(self, percent):
 
         if percent > 100:
@@ -350,12 +344,10 @@ class SentinelDownloader:
 
         self.dlg.search_progressBar.setValue(percent)
 
-
     def enable_btnSearch(self):
 
         self.dlg.btnSearch.setEnabled(True)
         self.dlg.btnSearchCancel.setEnabled(False)
-
 
     def search_finished(self, killed=False):
 
@@ -383,7 +375,6 @@ class SentinelDownloader:
         self.dlg.btnSearch.setEnabled(True)
         self.dlg.btnSearchCancel.setEnabled(False)
 
-
     def kill(self):
 
         if self.worker:
@@ -393,7 +384,6 @@ class SentinelDownloader:
         if self.workerD:
 
             self.workerD.killed = True
-
 
     def reset_parameters(self):
 
@@ -434,7 +424,6 @@ class SentinelDownloader:
         self.dlg.cloudCover_spinBox.setValue(10)
         self.dlg.cloudCover_enable.setChecked(False)
 
-
     def download_thread(self):
 
         self.dlg.btnDownload.setEnabled(False)
@@ -459,13 +448,12 @@ class SentinelDownloader:
 
         self.dlg.download_progressBar.setValue(percent)
 
-
     def download_finished(self, killed=False):
-
 
         if killed is False:
 
-            self.text_to_messagebox('Done!', 'Done downloading Sentinel products!')
+            self.text_to_messagebox(
+                'Done!', 'Done downloading Sentinel products!')
 
         #
         # Clean up Thread.
@@ -487,64 +475,17 @@ class SentinelDownloader:
         self.dlg.download_progressBar.setMinimum(0)
         # self.set_search_label('')
 
-
     def text_to_messagebox(self, header, message, long_text=None):
 
         msg_txt = QMessageBox()
         msg_txt.setIcon(QMessageBox.Information)
         msg_txt.setText(message)
-        #msg_txt.setInformativeText("This is additional information")
+        # msg_txt.setInformativeText("This is additional information")
         msg_txt.setWindowTitle(header)
         if long_text is not None:
             msg_txt.setDetailedText(long_text)
         msg_txt.exec_()
 
-
     def set_messageBar(self, message):
 
         self.iface.messageBar().pushMessage('Results', message, duration=30)
-
-    #
-    #
-    #
-    #
-    # def download_S1thread(self):
-    #
-    #     self.dlg.btnDownload.setEnabled(False)
-    #     self.dlg.btnDownloadCancel.setEnabled(True)
-    #
-    #     self.workerD1 = SentinelSearch(self.dlg)
-    #     self.threadD1 = QThread()
-    #     self.workerD1.moveToThread(self.threadD1)
-    #
-    #     self.threadD1.start()
-    #     self.threadD1.started.connect(self.workerD1.download_onlyS1)
-    #
-    #     self.workerD1.finished_S1download.connect(self.download_S1finished)
-    #
-    #
-    # def download_S1finished(self, killed=False):
-    #
-    #     #
-    #     # Clear progress bar widget and label.
-    #     #
-    #     # self.dlg.search_progressBar.reset()
-    #     # self.dlg.search_progressBar.setMinimum(0)
-    #     # self.set_search_label('')
-    #
-    #     if killed is False:
-    #
-    #         self.text_to_messagebox('Done!', 'Done downloading Sentinel products!')
-    #
-    #     #
-    #     # Clean up Thread.
-    #     #
-    #     self.workerD1.deleteLater()
-    #     self.threadD1.quit()
-    #     self.threadD1.deleteLater()
-    #
-    #     #
-    #     # Enable search button after searching.
-    #     #
-    #     self.dlg.btnDownload.setEnabled(True)
-    #     self.dlg.btnDownloadCancel.setEnabled(False)

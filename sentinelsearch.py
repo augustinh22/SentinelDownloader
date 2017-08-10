@@ -1764,6 +1764,7 @@ class SentinelSearch(QObject):
                     handle.write(chunk)
 
         except:
+
             pass
 
         return i
