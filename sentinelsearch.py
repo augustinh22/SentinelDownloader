@@ -26,9 +26,11 @@ class SentinelSearch(QObject):
     set_message = pyqtSignal(str)
     connecting_message = pyqtSignal(str)
     searching_message = pyqtSignal(str)
+    download_message = pyqtSignal(str)
     search_progress_max = pyqtSignal(int)
     search_progress_set = pyqtSignal(int)
     download_progress_set = pyqtSignal(int)
+    download_progress_max = pyqtSignal(int)
     enable_btnSearch = pyqtSignal()
 
     def __init__(self, dialog):
@@ -37,7 +39,7 @@ class SentinelSearch(QObject):
         self.killed = False
         self.value = self.set_value()
         self.session = None
-        self.fileDialog  = None
+        self.fileDialog = None
 
     def open(self):
 
@@ -1323,6 +1325,9 @@ class SentinelSearch(QObject):
         tW2 = self.dlg.s2Results_tableWidget
         tW1Rows = tW1.rowCount()
         tW2Rows = tW2.rowCount()
+
+        self.download_progress_max.emit(tW1Rows + tW2Rows)
+        self.download_message.emit('Downloading . . .')
 
         total_size = self.return_total_size(tW1, tW2)
         chunks_to_download = (float(total_size[:-3]))*1024/10

@@ -407,11 +407,13 @@ class SentinelDownloader:
 
             self.worker.killed = True
             self.dlg.btnSearchCancel.setEnabled(False)
+            self.dlg.search_label.setText('Cancelling . . .')
 
         if self.workerD:
 
             self.workerD.killed = True
             self.dlg.btnDownloadCancel.setEnabled(False)
+            self.dlg.download_label.setText('Cancelling . . .')
 
     def reset_parameters(self):
 
@@ -466,8 +468,6 @@ class SentinelDownloader:
 
         self.dlg.btnDownload.setEnabled(False)
         self.dlg.btnDownloadCancel.setEnabled(True)
-        self.dlg.download_progressBar.setMinimum(0)
-        self.dlg.download_progressBar.setMaximum(100)
 
         self.workerD = SentinelSearch(self.dlg)
         self.threadD = QThread()
@@ -476,6 +476,9 @@ class SentinelDownloader:
         self.threadD.start()
         self.threadD.started.connect(self.workerD.download_results)
         self.workerD.download_progress_set.connect(self.set_download_progress)
+        self.workerD.download_message.connect(self.set_download_label)
+        self.workerD.connecting_message.connect(self.set_download_label)
+        self.workerD.download_progress_max.connect(self.set_download_max)
 
         self.workerD.finished_download.connect(self.download_finished)
 
@@ -491,6 +494,30 @@ class SentinelDownloader:
             percent = 100
 
         self.dlg.download_progressBar.setValue(percent)
+
+    def set_download_max(self, max_value):
+
+        if max_value == 0:
+            #
+            # If there are no entries, reset bar to avoid problems.
+            #
+            self.dlg.download_progressBar.setMinimum(0)
+            self.dlg.download_progressBar.reset()
+
+        else:
+            self.dlg.download_progressBar.setMinimum(0)
+            self.dlg.download_progressBar.setMaximum(100)
+
+    def set_download_label(self, text):
+
+        self.dlg.download_label.setText(text)
+
+        if text == 'Connecting . . .':
+            #
+            # This makes progressBar move until real max is set.
+            #
+            self.dlg.download_progressBar.setMinimum(0)
+            self.dlg.download_progressBar.setMaximum(0)
 
     def download_finished(self, killed=False):
 
@@ -522,7 +549,7 @@ class SentinelDownloader:
         #
         self.dlg.download_progressBar.reset()
         self.dlg.download_progressBar.setMinimum(0)
-        # self.set_search_label('')
+        self.dlg.download_label.setText('')
 
     @staticmethod
     def text_to_messagebox(header, message, long_text=None):
