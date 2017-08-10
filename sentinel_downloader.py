@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+'''
 /***************************************************************************
  SentinelDownloader
                                  A QGIS plugin
@@ -19,21 +19,14 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-"""
-
-import ast
-import sys
-import pyproj
+'''
 import os.path
-import requests
-import zipfile
-from datetime import date
-from datetime import datetime
-import xml.etree.ElementTree as etree
+
+import pyproj
 import qgis
 from PyQt4.QtCore import (
-    QSettings, QTranslator, qVersion, QCoreApplication, QDate, Qt, QThread)
-from PyQt4.QtGui import QAction, QIcon, QMessageBox, QWidget
+    QSettings, QTranslator, qVersion, QCoreApplication, QDate, QThread)
+from PyQt4.QtGui import QAction, QIcon, QMessageBox
 # Initialize Qt resources from file resources.py
 import resources
 # Import the code for the dialog
@@ -43,26 +36,33 @@ from sentinelsearch import SentinelSearch
 
 class SentinelDownloader:
 
-    """QGIS Plugin Implementation."""
+    '''
+    QGIS Plugin Implementation.
+    '''
 
     def __init__(self, iface):
-        """Constructor.
+        '''
+        Constructor.
 
         :param iface: An interface instance that will be passed to this class
             which provides the hook by which you can manipulate the QGIS
             application at run time.
         :type iface: QgsInterface
-        """
+        '''
         #
         # Save reference to the QGIS interface.
         #
         self.iface = iface
 
         #
-        # Initialize threads.
+        # Initialize class variables.
         #
+        self.dlg = None
+        self.downloader = None
         self.worker = None
         self.workerD = None
+        self.thread = None
+        self.threadD = None
 
         #
         # Initialize plugin directory.
@@ -101,7 +101,8 @@ class SentinelDownloader:
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
-        """Get the translation for a string using Qt translation API.
+        '''
+        Get the translation for a string using Qt translation API.
 
         We implement this ourselves since we do not inherit QObject.
 
@@ -110,7 +111,7 @@ class SentinelDownloader:
 
         :returns: Translated version of message.
         :rtype: QString
-        """
+        '''
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('SentinelDownloader', message)
 
@@ -126,7 +127,8 @@ class SentinelDownloader:
             whats_this=None,
             parent=None):
 
-        """Add a toolbar icon to the toolbar.
+        '''
+        Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
             path (e.g. ':/plugins/foo/bar.png') or a normal file system path.
@@ -163,7 +165,7 @@ class SentinelDownloader:
         :returns: The action that was created. Note that the action is also
             added to self.actions list.
         :rtype: QAction
-        """
+        '''
 
         #
         # Create the dialog (after translation) and keep reference.
@@ -191,7 +193,9 @@ class SentinelDownloader:
 
         self.actions.append(action)
 
-        """TODO: Need to add threading for button actions."""
+        '''
+        TODO: Need to add threading for button actions.
+        '''
 
         self.downloader = SentinelSearch(self.dlg)
 
@@ -215,7 +219,9 @@ class SentinelDownloader:
 
     def initGui(self):
 
-        """Create the menu entries and toolbar icons inside the QGIS GUI."""
+        '''
+        Create the menu entries and toolbar icons inside the QGIS GUI.
+        '''
 
         icon_path = ':/plugins/SentinelDownloader/icon.png'
         self.add_action(
@@ -226,7 +232,9 @@ class SentinelDownloader:
 
     def unload(self):
 
-        """Removes the plugin menu item and icon from QGIS GUI."""
+        '''
+        Removes the plugin menu item and icon from QGIS GUI.
+        '''
 
         for action in self.actions:
             self.iface.removePluginWebMenu(
@@ -238,7 +246,9 @@ class SentinelDownloader:
 
     def run(self):
 
-        """Run method that performs all the real work."""
+        '''
+        Run method that performs all the real work.
+        '''
 
         #
         # Show the dialog.
@@ -254,6 +264,11 @@ class SentinelDownloader:
         #     pass
 
     def get_extent(self):
+
+        '''
+        Returns current extent shown in QGIS as upper and lower limits for both
+        X and Y axis in the current projection.
+        '''
 
         #
         # Get current extent coordinates.
@@ -288,6 +303,11 @@ class SentinelDownloader:
         self.dlg.ULY_lineEdit.setText(str('{0:.2f}'.format(ULY_new)))
 
     def search_thread(self):
+
+        '''
+        Creates Qt thread for searching so that the GUI does not freeze and
+        QGIS does not crash.
+        '''
 
         #
         # Disable search button while searching.
@@ -377,15 +397,28 @@ class SentinelDownloader:
 
     def kill(self):
 
+        '''
+        Starts to kill either the search or download processes, which are
+        both initiated by Cancel buttons. It also disables the Cancel
+        buttons such that the user does not crash QGIS.
+        '''
+
         if self.worker:
 
             self.worker.killed = True
+            self.dlg.btnSearchCancel.setEnabled(False)
 
         if self.workerD:
 
             self.workerD.killed = True
+            self.dlg.btnDownloadCancel.setEnabled(False)
 
     def reset_parameters(self):
+
+        '''
+        Sets all user input back to default values. Initaited by the user
+        clicking the reset button.
+        '''
 
         self.dlg.sensor_comboBox.setCurrentIndex(0)
 
@@ -426,6 +459,11 @@ class SentinelDownloader:
 
     def download_thread(self):
 
+        '''
+        Starts a download thread. Initiated by the user clicking the download
+        button.
+        '''
+
         self.dlg.btnDownload.setEnabled(False)
         self.dlg.btnDownloadCancel.setEnabled(True)
         self.dlg.download_progressBar.setMinimum(0)
@@ -443,12 +481,23 @@ class SentinelDownloader:
 
     def set_download_progress(self, percent):
 
+        '''
+        Sets the download progress bar for the overall download progress in
+        percent, based on the total bits to download according to the products
+        sizes in the GUI tables.
+        '''
+
         if percent > 100:
             percent = 100
 
         self.dlg.download_progressBar.setValue(percent)
 
     def download_finished(self, killed=False):
+
+        '''
+        Cleans up the download thread once downloading is complete, or if the
+        process was killed by the user.
+        '''
 
         if killed is False:
 
@@ -475,7 +524,12 @@ class SentinelDownloader:
         self.dlg.download_progressBar.setMinimum(0)
         # self.set_search_label('')
 
-    def text_to_messagebox(self, header, message, long_text=None):
+    @staticmethod
+    def text_to_messagebox(header, message, long_text=None):
+
+        '''
+        Prints a given message to a pop-up message box.
+        '''
 
         msg_txt = QMessageBox()
         msg_txt.setIcon(QMessageBox.Information)
@@ -487,5 +541,10 @@ class SentinelDownloader:
         msg_txt.exec_()
 
     def set_messageBar(self, message):
+
+        '''
+        Prints the total size of all products in the GUI tables to the QGIS
+        message bar.
+        '''
 
         self.iface.messageBar().pushMessage('Results', message, duration=30)
