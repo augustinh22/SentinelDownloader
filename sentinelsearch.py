@@ -1,11 +1,14 @@
+'''
+Docstring.
+'''
 import ast
 import sys
 import os.path
-import requests
 import zipfile
-from datetime import date
-from datetime import datetime
+import traceback
 import xml.etree.ElementTree as etree
+
+import requests
 import qgis
 
 from PyQt4.QtCore import QDate, Qt, QObject, pyqtSignal
@@ -14,9 +17,12 @@ from PyQt4.QtGui import QMessageBox, QFileDialog, QTableWidgetItem, QWidget
 
 class SentinelSearch(QObject):
 
+    '''
+    This class holds all of the search and download functionality.
+    '''
+
     finished = pyqtSignal(bool)
     finished_download = pyqtSignal(bool)
-    # finished_S1download = pyqtSignal(bool)
     set_message = pyqtSignal(str)
     connecting_message = pyqtSignal(str)
     searching_message = pyqtSignal(str)
@@ -29,10 +35,15 @@ class SentinelSearch(QObject):
         QObject.__init__(self)
         self.dlg = dialog
         self.killed = False
+        self.value = self.set_value()
+        self.session = None
+        self.fileDialog  = None
 
     def open(self):
 
-        """Open file dialog and return selected directory path."""
+        '''
+        Open file dialog and return selected directory path.
+        '''
 
         self.fileDialog = QFileDialog()
         # self.fileDialog.show()
@@ -41,40 +52,14 @@ class SentinelSearch(QObject):
 
     def get_arguments(self):
 
+        '''
+        This function retrieves user input information from GUI.
+        '''
+
         #
         # Create options namespace. Perhaps (definitely) bad practice.
         #
         options = Namespace()
-
-        #
-        # Initialize variables.
-        #
-        options.user = None
-        options.password = None
-        options.hub = None
-        options.sentinel = None
-        options.orderby = None
-        options.latmin = None
-        options.latmax = None
-        options.lonmin = None
-        options.lonmax = None
-        options.lat = None
-        options.lon = None
-        options.tile = None
-        options.write_dir = None
-        options.max_records = None
-        options.start_date = None
-        options.end_date = None
-        options.start_ingest_date = None
-        options.end_ingest_date = None
-        options.rel_orbit = None
-        options.abs_orbit = None
-        options.orbitdir = None
-        options.s1mode = None
-        options.s1polar = None
-        options.s1product = None
-        options.s2product = None
-        options.max_cloud = None
 
         #
         # Determine data download hub (e.g. ESA API or dhus)
@@ -315,12 +300,16 @@ class SentinelSearch(QObject):
 
     def args_to_messagebox(self, options, query=None):
 
+        '''
+        This function prints GUI input arguments to a message box as a test.
+        '''
+
         options_dict = vars(options)
         options_string = ''
 
-        for key, value in options_dict.iteritems():
+        for key, val in options_dict.iteritems():
 
-            options_string += '{} : {}\n'.format(key, value)
+            options_string += '{} : {}\n'.format(key, val)
 
         msg_args = QMessageBox()
         msg_args.setIcon(QMessageBox.Information)
@@ -347,8 +336,10 @@ class SentinelSearch(QObject):
 
     def get_tile_coords(self):
 
-        """Prints returned tile center coordinates to GUI or creates an
-            error message box."""
+        '''
+        Prints returned tile center coordinates to GUI or creates an
+        error message box.
+        '''
 
         #
         # Get tile name from GUI and conduct API request with kml_api()
@@ -363,7 +354,6 @@ class SentinelSearch(QObject):
 
             lon = str(round((float(coords[0])), 4))
             lat = str(round((float(coords[1])), 4))
-            coords_str = '{}: lon {}, lat {}'.format(s2_tile, lon, lat)
             self.dlg.lat_lineEdit.setText(lat)
             self.dlg.lon_lineEdit.setText(lon)
 
@@ -377,8 +367,10 @@ class SentinelSearch(QObject):
 
     def kml_api(self, tile):
 
-        """Returns the center point of a defined S2 tile based on an
-            API developed by M. Sudmanns."""
+        '''
+        Returns the center point of a defined S2 tile based on an
+        API developed by M. Sudmanns.
+        '''
 
         with requests.Session() as s:
 
@@ -418,7 +410,9 @@ class SentinelSearch(QObject):
 
     def create_query(self, options, huburl, maxrecords):
 
-        """Creates a query string for the data hub based on GUI input."""
+        '''
+        Creates a query string for the data hub based on GUI input.
+        '''
 
         #
         # Build in checks for valid commands related to the spatial aspect.
@@ -688,6 +682,11 @@ class SentinelSearch(QObject):
 
     def start_session(self, options):
 
+        '''
+        This function creates a requests session based on authorization info
+        input in the GUI (i.e. hub, user and pass).
+        '''
+
         #
         # Emit message to UI.
         #
@@ -734,16 +733,16 @@ class SentinelSearch(QObject):
         #
         # Start session/authorization using requests module.
         #
-        session = requests.Session()
-        session.auth = (account, passwd)
+        self.session = requests.Session()
+        self.session.auth = (account, passwd)
 
-        return session, huburl, account, passwd, maxrecords
+        return huburl, maxrecords
 
     def set_value(self):
 
-        """A place to set platform dependent bits."""
-
-        # TODO: platform dependent testing.
+        '''
+        A place to set platform dependent bits.
+        '''
 
         if (sys.platform.startswith('linux')
                 or sys.platform.startswith('darwin')):
@@ -756,6 +755,10 @@ class SentinelSearch(QObject):
         return value
 
     def get_query_xml(self):
+
+        '''
+        This function retrieves an xml result from the query to the hub.
+        '''
 
         try:
             options = self.get_arguments()
@@ -783,10 +786,8 @@ class SentinelSearch(QObject):
             #
             # Create authenticated http session.
             #
-            session, huburl, account, passwd, maxrecords = self.start_session(
+            huburl, maxrecords = self.start_session(
                 options)
-
-            value = self.set_value()
 
             query = self.create_query(options, huburl, maxrecords)
 
@@ -797,15 +798,15 @@ class SentinelSearch(QObject):
             tW1 = self.dlg.s1Results_tableWidget
             tW2 = self.dlg.s2Results_tableWidget
 
-            """TODO: add loop to accomodate larger queries of more than 100
-            records, where start is updated. Max rows are hardcoded or modified
-            to smallernumbers already in create_query()."""
+            # TODO: add loop to accomodate larger queries of more than 100
+            # records, where start is updated. Max rows are hardcoded or
+            # modified to smallernumbers already in create_query().
 
             #
             # Create GET request from hub and parse it.
             #
             try:
-                response = session.get(query, stream=True)
+                response = self.session.get(query, stream=True)
                 query_tree = etree.fromstring(response.content)
 
             except:
@@ -817,16 +818,10 @@ class SentinelSearch(QObject):
 
                 self.text_to_messagebox('Error', message)
                 self.enable_btnSearch.emit()
-                # query_tree = etree.parse(
-                #    'C:\Users\GISmachine\Documents\GitHub\AIQ\query_results.xml')
+
                 return
 
             entries = query_tree.findall('{http://www.w3.org/2005/Atom}entry')
-
-            #
-            # Save the number of scenes to a variable.
-            #
-            scenes = str(len(entries))
 
             #
             # Create progress bar with maximum as the number of entries.
@@ -933,7 +928,7 @@ class SentinelSearch(QObject):
                     sensing_date = ((entries[entry].find(
                         './/*[@name="beginposition"]')).text)[:10]
                     sentinel_link = ("{}odata/v1/Products('{}')/{}").format(
-                        huburl, uuid_element, value)
+                        huburl, uuid_element, self.value)
 
                     footprint = footprint.replace(
                         'POLYGON ((', "").replace('))', "").split(',')
@@ -1021,7 +1016,7 @@ class SentinelSearch(QObject):
                             try:
 
                                 found_tiles = self.return_tiles(
-                                    session, uuid_element, filename, huburl)
+                                    uuid_element, filename, huburl)
 
                                 #
                                 # Print the number of tiles and their names.
@@ -1086,7 +1081,7 @@ class SentinelSearch(QObject):
             #    'Results.', 'Total size of results: {}'.format(total_size))
             size_message = 'Total size of results: {}'.format(total_size)
             self.set_message.emit(size_message)
-            session.close()
+            self.session.close()
 
         except Exception, e:
 
@@ -1095,7 +1090,12 @@ class SentinelSearch(QObject):
 
         self.finished.emit(self.killed)
 
-    def return_total_size(self, tW1, tW2):
+    @staticmethod
+    def return_total_size(tW1, tW2):
+
+        '''
+        Returns the total size of all complete products in combined GUI tables.
+        '''
 
         #
         # Calculate cumulative size of all scenes in both tables.
@@ -1144,10 +1144,12 @@ class SentinelSearch(QObject):
 
         return total_size
 
-    def return_tiles(self, session, uuid_element, filename, huburl, tile=''):
+    def return_tiles(self, uuid_element, filename, huburl, tile=''):
 
-        '''Function returns tiles incldued in the GRANULE folder of a product,
-           including the entire file name of one desired tile, if specified.'''
+        '''
+        Function returns tiles incldued in the GRANULE folder of a product,
+        including the entire file name of one desired tile, if specified.
+        '''
 
         #
         # Create link to search for tile/granule data.
@@ -1160,7 +1162,7 @@ class SentinelSearch(QObject):
         #
         # Create GET request from hub and parse it.
         #
-        response = session.get(granule_link, stream=True)
+        response = self.session.get(granule_link, stream=True)
         granule_tree = etree.fromstring(response.content)
 
         #
@@ -1205,12 +1207,17 @@ class SentinelSearch(QObject):
         # tile file name if a specific tile was asked for.
         #
         if not granule_file:
+
             return(granule_entries, granules)
 
-        else:
-            return(granule_file)
+        return granule_file
 
-    def add_to_table(self, table, item, row, column):
+    @staticmethod
+    def add_to_table(table, item, row, column):
+
+        '''
+        This function adds an entry to a row in one of the GUI tables.
+        '''
 
         itMID = QTableWidgetItem()
 
@@ -1220,7 +1227,9 @@ class SentinelSearch(QObject):
 
     def clearTable(self):
 
-        """Clears both Sentinel-1 and Sentinel-2 results tables."""
+        '''
+        Clears both Sentinel-1 and Sentinel-2 results tables.
+        '''
 
         #
         # Confirm clearing of tables.
@@ -1251,14 +1260,17 @@ class SentinelSearch(QObject):
 
             pass
 
-    def make_dir(self, location, filename):
+    @staticmethod
+    def make_dir(location, filename):
 
-        ''' Creates a directory in another directory if it doesn't
-            already exist.'''
+        '''
+        Creates a directory in another directory if it doesn't
+        already exist.
+        '''
 
         dir_name = '{}/{}'.format(location, filename)
 
-        if not(os.path.exists(dir_name)):
+        if not os.path.exists(dir_name):
 
             os.mkdir(dir_name)
 
@@ -1266,14 +1278,18 @@ class SentinelSearch(QObject):
 
     def download_results(self):
 
+        '''
+        Downloads all products listed in the GUI tables.
+        '''
+
         options = self.get_arguments()
 
         #
         # Create download directory if it doesn't yet exist.
         #
-        if not(os.path.exists(options.write_dir)):
+        if not os.path.exists(options.write_dir):
 
-                os.mkdir(options.write_dir)
+            os.mkdir(options.write_dir)
 
         #
         # Make sure write_dir is formatted properly.
@@ -1297,13 +1313,8 @@ class SentinelSearch(QObject):
         #
         # Create authenticated http session.
         #
-        session, huburl, account, passwd, maxrecords = self.start_session(
+        huburl, maxrecords = self.start_session(
             options)
-
-        #
-        # Platform dependent stuff.
-        #
-        value = self.set_value()
 
         #
         # Define data tables for S1 and S2 results.
@@ -1346,7 +1357,7 @@ class SentinelSearch(QObject):
                 pass
 
             i = self.download_link(
-                session, zfile, sentinel_link, options.write_dir, i,
+                zfile, sentinel_link, options.write_dir, i,
                 chunks_to_download)
 
             if self.killed is True:
@@ -1391,7 +1402,7 @@ class SentinelSearch(QObject):
                     pass
 
                 i = self.download_link(
-                    session, zfile, sentinel_link, options.write_dir, i,
+                    zfile, sentinel_link, options.write_dir, i,
                     chunks_to_download)
 
                 if self.killed is True:
@@ -1462,7 +1473,7 @@ class SentinelSearch(QObject):
                     # Create tile dir in GRANULE dir based on tile file name.
                     #
                     tile_file = self.return_tiles(
-                        session, uuid_element, filename, huburl, options.tile)
+                        uuid_element, filename, huburl, options.tile)
 
                     #
                     # If tile folder already exists, then it skips downloading.
@@ -1489,11 +1500,11 @@ class SentinelSearch(QObject):
                     # Download the product header file after finding the name
                     #
                     header_file = self.return_header(
-                        session, huburl, uuid_element, filename)
+                        huburl, uuid_element, filename)
                     header_link = "{}('{}')/{}".format(
-                        sentinel_link, header_file, value)
+                        sentinel_link, header_file, self.value)
                     i = self.download_link(
-                        session, header_file, header_link, product_dir_name, i,
+                        header_file, header_link, product_dir_name, i,
                         chunks_to_download)
 
                     if self.killed is True:
@@ -1505,9 +1516,9 @@ class SentinelSearch(QObject):
                     #
                     inspire_file = 'INSPIRE.xml'
                     inspire_link = "{}('{}')/{}".format(
-                        sentinel_link, inspire_file, value)
+                        sentinel_link, inspire_file, self.value)
                     i = self.download_link(
-                        session, inspire_file, inspire_link,
+                        inspire_file, inspire_link,
                         product_dir_name, i, chunks_to_download)
 
                     if self.killed is True:
@@ -1519,9 +1530,9 @@ class SentinelSearch(QObject):
                     #
                     manifest_file = 'manifest.safe'
                     manifest_link = "{}('{}')/{}".format(
-                        sentinel_link, manifest_file, value)
+                        sentinel_link, manifest_file, self.value)
                     i = self.download_link(
-                        session, manifest_file, manifest_link,
+                        manifest_file, manifest_link,
                         product_dir_name, i, chunks_to_download)
 
                     if self.killed is True:
@@ -1534,7 +1545,7 @@ class SentinelSearch(QObject):
                     #
 
                     i = self.get_tile_files(
-                        session, huburl, value, uuid_element, filename,
+                        huburl, uuid_element, filename,
                         tile_file, tile_dir, i, chunks_to_download)
 
                     # print 'Downloaded tile {} from scene #{}\n'.format(
@@ -1556,7 +1567,7 @@ class SentinelSearch(QObject):
                         pass
 
                     i = self.download_link(
-                        session, zfile, sentinel_link, options.write_dir, i,
+                        zfile, sentinel_link, options.write_dir, i,
                         chunks_to_download)
 
                     if self.killed is True:
@@ -1569,15 +1580,17 @@ class SentinelSearch(QObject):
                     self.unzip_result(
                         options.write_dir, filename, zfile, title_element)
 
-        session.close()
+        self.session.close()
         self.finished_download.emit(self.killed)
 
     def get_tile_files(
-            self, session, huburl, value, uuid_element, filename, tile_file,
+            self, huburl, uuid_element, filename, tile_file,
             tile_dir, i, chunks_to_download):
 
-        ''' Creates structure for tile specific download (tile inside GRANULE
-           folder), and fills it.'''
+        '''
+        Creates structure for tile specific download (tile inside GRANULE
+        folder), and fills it.
+        '''
 
         #
         # Define link to tile folder in data hub.
@@ -1590,7 +1603,7 @@ class SentinelSearch(QObject):
         #
         # Connect to server and stream the metadata as a string, parsing it.
         #
-        response = session.get(tile_folder_link, stream=True)
+        response = self.session.get(tile_folder_link, stream=True)
         tile_folder_tree = etree.fromstring(response.content)
 
         #
@@ -1620,10 +1633,10 @@ class SentinelSearch(QObject):
             if '.xml' in tile_entry_title:
 
                 tile_xml_file = tile_entry_title
-                tile_xml_link = '{}/{}'.format(tile_entry_id, value)
+                tile_xml_link = '{}/{}'.format(tile_entry_id, self.value)
 
                 i = self.download_link(
-                    session, tile_xml_file, tile_xml_link, tile_dir, i,
+                    tile_xml_file, tile_xml_link, tile_dir, i,
                     chunks_to_download)
 
             else:
@@ -1633,24 +1646,26 @@ class SentinelSearch(QObject):
                 #
                 inside_folder_dir = self.make_dir(tile_dir, tile_entry_title)
                 i = self.get_inside_files(
-                    session, value, inside_folder_dir, tile_entry_id, i,
+                    inside_folder_dir, tile_entry_id, i,
                     chunks_to_download)
 
         return i
 
     def get_inside_files(
-            self, session, value, inside_folder_dir, tile_entry_id, i,
+            self, inside_folder_dir, tile_entry_id, i,
             chunks_to_download):
 
-        ''' Go deeper in the element tree and download contents to the specified
-           folder. This is relevant for tile specific downloads in the old file
-           structure, pre-06.12.16.'''
+        '''
+        Go deeper in the element tree and download contents to the specified
+        folder. This is relevant for tile specific downloads in the old file
+        structure, pre-06.12.16.
+        '''
 
         #
         # Get xml link and connect to server, parsing response as a string.
         #
         inside_folder_link = '{}/Nodes'.format(tile_entry_id)
-        resp = session.get(inside_folder_link, stream=True)
+        resp = self.session.get(inside_folder_link, stream=True)
         inside_folder_tree = etree.fromstring(resp.content)
 
         #
@@ -1675,18 +1690,20 @@ class SentinelSearch(QObject):
                 inside_folder_entries[inside_folder_entry].find(
                     '{http://www.w3.org/2005/Atom}id')).text
             inside_entry_file = inside_entry_title
-            inside_entry_link = '{}/{}'.format(inside_entry_id, value)
+            inside_entry_link = '{}/{}'.format(inside_entry_id, self.value)
 
             i = self.download_link(
-                session, inside_entry_file, inside_entry_link,
+                inside_entry_file, inside_entry_link,
                 inside_folder_dir, i, chunks_to_download)
 
         return i
 
     def unzip_result(self, target_dir, filename, zfile, title_element):
 
-        '''This function checks for zipped copies of results and handles
-            accordingly.'''
+        '''
+        This function checks for zipped copies of results and handles
+        accordingly.
+        '''
 
         unzipped_path = os.path.join(target_dir, filename)
         zipped_path = os.path.join(target_dir, zfile)
@@ -1708,10 +1725,13 @@ class SentinelSearch(QObject):
 
             os.remove(zipped_path)
 
-    def unzip_path(self, target_dir, zfile_path):
+    @staticmethod
+    def unzip_path(target_dir, zfile_path):
 
-        '''This function unzips a result in linux and windows, even if
-            the pathname is really long.'''
+        '''
+        This function unzips a result in linux and windows, even if
+        the pathname is really long.
+        '''
 
         try:
 
@@ -1733,7 +1753,7 @@ class SentinelSearch(QObject):
             os.remove(zfile_path)
 
     def download_link(
-            self, session, file_toGet, link_toGet, target_folder, i,
+            self, file_toGet, link_toGet, target_folder, i,
             chunks_to_download):
 
         target_path = os.path.join(target_folder, file_toGet)
@@ -1743,7 +1763,7 @@ class SentinelSearch(QObject):
         # Download file in chunks using requests module.
         #
         try:
-            response = session.get(link_toGet, stream=True)
+            response = self.session.get(link_toGet, stream=True)
             with open(target_path, "wb") as handle:
                 #
                 # Iterate over content in 10MB chunks.
@@ -1769,10 +1789,12 @@ class SentinelSearch(QObject):
 
         return i
 
-    def return_header(self, session, huburl, uuid_element, filename):
+    def return_header(self, huburl, uuid_element, filename):
 
-        ''' Function returns name of header xml incldued in a product.
-            This is used only for pre-December 06, 2016 tile extraction.'''
+        '''
+        Function returns name of header xml incldued in a product.
+        This is used only for pre-December 06, 2016 tile extraction.
+        '''
 
         #
         # Create link to search for tile/granule data.
@@ -1783,7 +1805,7 @@ class SentinelSearch(QObject):
         #
         # Create GET request from hub and essentially parse it.
         #
-        response = session.get(safe_link, stream=True)
+        response = self.session.get(safe_link, stream=True)
         safe_tree = etree.fromstring(response.content)
 
         #
@@ -1814,10 +1836,13 @@ class SentinelSearch(QObject):
             # print 'Header xml could not be located!'
             # Maybe change to throw some sort of exception?
 
-    def download_check(self, write_dir, title_element, filename):
+    @staticmethod
+    def download_check(write_dir, title_element, filename):
 
-        ''' Function checks if files have aleady been downloaded. If yes, but
-           unzipped, it unzips them and deletes the zipped folder.'''
+        '''
+        Function checks if files have aleady been downloaded. If yes, but
+        unzipped, it unzips them and deletes the zipped folder.
+        '''
 
         #
         # Possible zipped folder name.
@@ -1868,6 +1893,10 @@ class SentinelSearch(QObject):
 
     def remove_selected(self):
 
+        '''
+        Removes selected rows in GUI table.
+        '''
+
         #
         # Ask for confirmation.
         #
@@ -1891,10 +1920,14 @@ class SentinelSearch(QObject):
         else:
             pass
 
-    def removeRowsFromTable(self, table):
+    @staticmethod
+    def removeRowsFromTable(table):
+
+        '''
+        Removes selected rows in GUI table called from remove_selected().
+        '''
 
         tW = table
-        c = tW.rowCount()
 
         #
         # List of entries to remove (single cell selections count!).
@@ -1918,6 +1951,42 @@ class SentinelSearch(QObject):
 #
 # Ultimately this exists to create an empty namespace similar to the output of
 # optparse or argparse to keep from having to change much code from before.
+# Should eventually switch to a dictionary.
 #
 class Namespace(object):
-    pass
+
+    '''
+    This creates a name space for all arguments gathered from the GUI.
+    '''
+
+    def __init__(self):
+
+        #
+        # Initialize variables.
+        #
+        self.user = None
+        self.password = None
+        self.hub = None
+        self.sentinel = None
+        self.orderby = None
+        self.latmin = None
+        self.latmax = None
+        self.lonmin = None
+        self.lonmax = None
+        self.lat = None
+        self.lon = None
+        self.tile = None
+        self.write_dir = None
+        self.max_records = None
+        self.start_date = None
+        self.end_date = None
+        self.start_ingest_date = None
+        self.end_ingest_date = None
+        self.rel_orbit = None
+        self.abs_orbit = None
+        self.orbitdir = None
+        self.s1mode = None
+        self.s1polar = None
+        self.s1product = None
+        self.s2product = None
+        self.max_cloud = None
