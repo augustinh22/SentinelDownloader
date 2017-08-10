@@ -59,7 +59,7 @@
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="login_tab">
       <property name="sizePolicy">
@@ -826,6 +826,13 @@ background-color: rgba(85, 170, 0, 180);</string>
                <day>3</day>
               </datetime>
              </property>
+             <property name="date">
+              <date>
+               <year>2013</year>
+               <month>4</month>
+               <day>3</day>
+              </date>
+             </property>
              <property name="minimumDateTime">
               <datetime>
                <hour>0</hour>
@@ -855,13 +862,6 @@ background-color: rgba(85, 170, 0, 180);</string>
              </property>
              <property name="calendarPopup">
               <bool>true</bool>
-             </property>
-             <property name="date">
-              <date>
-               <year>2013</year>
-               <month>4</month>
-               <day>3</day>
-              </date>
              </property>
             </widget>
            </item>
@@ -916,6 +916,13 @@ background-color: rgba(85, 170, 0, 180);</string>
                <pointsize>10</pointsize>
               </font>
              </property>
+             <property name="date">
+              <date>
+               <year>2017</year>
+               <month>4</month>
+               <day>30</day>
+              </date>
+             </property>
              <property name="maximumDate">
               <date>
                <year>2100</year>
@@ -935,13 +942,6 @@ background-color: rgba(85, 170, 0, 180);</string>
              </property>
              <property name="calendarPopup">
               <bool>true</bool>
-             </property>
-             <property name="date">
-              <date>
-               <year>2017</year>
-               <month>4</month>
-               <day>30</day>
-              </date>
              </property>
             </widget>
            </item>
@@ -1197,6 +1197,13 @@ background-color: rgba(85, 170, 0, 180);</string>
                <pointsize>10</pointsize>
               </font>
              </property>
+             <property name="date">
+              <date>
+               <year>2013</year>
+               <month>4</month>
+               <day>3</day>
+              </date>
+             </property>
              <property name="minimumDateTime">
               <datetime>
                <hour>0</hour>
@@ -1226,13 +1233,6 @@ background-color: rgba(85, 170, 0, 180);</string>
              </property>
              <property name="calendarPopup">
               <bool>true</bool>
-             </property>
-             <property name="date">
-              <date>
-               <year>2013</year>
-               <month>4</month>
-               <day>3</day>
-              </date>
              </property>
             </widget>
            </item>
@@ -1287,18 +1287,18 @@ background-color: rgba(85, 170, 0, 180);</string>
                <pointsize>10</pointsize>
               </font>
              </property>
-             <property name="displayFormat">
-              <string>yyyy-MM-dd</string>
-             </property>
-             <property name="calendarPopup">
-              <bool>true</bool>
-             </property>
              <property name="date">
               <date>
                <year>2017</year>
                <month>4</month>
                <day>30</day>
               </date>
+             </property>
+             <property name="displayFormat">
+              <string>yyyy-MM-dd</string>
+             </property>
+             <property name="calendarPopup">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -2153,24 +2153,24 @@ background-color: rgba(85, 170, 0, 180);</string>
        <string>Results</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_5">
-       <item row="1" column="6">
+       <item row="2" column="6">
         <widget class="QPushButton" name="btnClear">
          <property name="text">
           <string>Clear</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="4">
-        <widget class="QPushButton" name="btnDownload">
-         <property name="text">
-          <string>Download</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="5">
+       <item row="2" column="5">
         <widget class="QPushButton" name="btnDownloadCancel">
          <property name="text">
           <string>Cancel</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="4">
+        <widget class="QPushButton" name="btnDownload">
+         <property name="text">
+          <string>Download</string>
          </property>
         </widget>
        </item>
@@ -2276,7 +2276,7 @@ background-color: rgba(85, 170, 0, 180);</string>
             <x>0</x>
             <y>0</y>
             <width>680</width>
-            <height>365</height>
+            <height>344</height>
            </rect>
           </property>
           <attribute name="label">
@@ -2377,14 +2377,14 @@ background-color: rgba(85, 170, 0, 180);</string>
          </widget>
         </widget>
        </item>
-       <item row="1" column="0" colspan="2">
+       <item row="2" column="0" colspan="2">
         <widget class="QPushButton" name="btnClearSelected">
          <property name="text">
           <string>Remove Selected</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="3">
+       <item row="2" column="3">
         <spacer name="horizontalSpacer_14">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -2397,10 +2397,17 @@ background-color: rgba(85, 170, 0, 180);</string>
          </property>
         </spacer>
        </item>
-       <item row="1" column="2">
+       <item row="2" column="2">
         <widget class="QProgressBar" name="download_progressBar">
          <property name="value">
           <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QLabel" name="download_label">
+         <property name="text">
+          <string/>
          </property>
         </widget>
        </item>
