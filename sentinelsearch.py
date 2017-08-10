@@ -1443,18 +1443,18 @@ class SentinelSearch(QObject):
                     if self.killed == True:
                         # kill request received, exit loop early.
                         break
-        #
-        #             #
-        #             # Download tile xml file and create AUX_DATA, IMG_DATA and QI_DATA
-        #             # folders in the tile folder and download their contents.
-        #             #
-        #
-        #             # get_tile_files(uuid_element, filename, tile_file, tile_dir)
-        #
-        #             # print 'Downloaded tile {} from scene #{}\n'.format(
-        #             #     options.tile, str(entry + 1))
-        #
-        #
+
+                    #
+                    # Download tile xml file and create AUX_DATA, IMG_DATA and QI_DATA
+                    # folders in the tile folder and download their contents.
+                    #
+
+                    i = self.get_tile_files(session, huburl, value, uuid_element, filename, tile_file, tile_dir, i, chunks_to_download)
+
+                    # print 'Downloaded tile {} from scene #{}\n'.format(
+                    #     options.tile, str(entry + 1))
+
+
                 elif (options.tile in included_tiles
                         and (filename.startswith('S2A_MSIL')
                         or filename.startswith('S2B_MSIL'))):
@@ -1481,6 +1481,98 @@ class SentinelSearch(QObject):
 
         session.close()
         self.finished_download.emit(self.killed)
+
+
+    def get_tile_files(self, session, huburl, value, uuid_element, filename, tile_file, tile_dir, i, chunks_to_download):
+
+        ''' Creates structure for tile specific download (tile inside GRANULE
+           folder), and fills it.'''
+
+        #
+        # Define link to tile folder in data hub.
+        #
+        tile_folder_link = ("{}odata/v1/Products"
+            "('{}')/Nodes('{}')/Nodes('GRANULE')/Nodes('{}')/Nodes").format(
+            huburl, uuid_element, filename, tile_file)
+
+        #
+        # Connect to the server and stream the metadata as a string, parsing it.
+        #
+        response = session.get(tile_folder_link, stream=True)
+        tile_folder_tree = etree.fromstring(response.content)
+
+        #
+        # Search for all entires
+        #
+        tile_folder_entries = (tile_folder_tree.findall(
+            '{http://www.w3.org/2005/Atom}entry'))
+
+        #
+        # Go through each entry and identify necessary information for download.
+        #
+        for tile_folder_entry in range(len(tile_folder_entries)):
+
+            tile_entry_title = (tile_folder_entries[tile_folder_entry].find(
+                '{http://www.w3.org/2005/Atom}title')).text
+
+            tile_entry_id = (tile_folder_entries[tile_folder_entry].find(
+                '{http://www.w3.org/2005/Atom}id')).text
+
+            #
+            # Download xml file
+            #
+            if '.xml' in tile_entry_title:
+
+                tile_xml_file = tile_entry_title
+                tile_xml_link = '{}/{}'.format(tile_entry_id, value)
+
+                i = self.download_link(session, tile_xml_file, tile_xml_link, tile_dir, i, chunks_to_download)
+
+            else:
+
+                #
+                # Create folder for files and go get them
+                #
+                inside_folder_dir = self.make_dir(tile_dir, tile_entry_title)
+                i = self.get_inside_files(session, value, inside_folder_dir, tile_entry_id, i, chunks_to_download)
+
+        return i
+
+
+    def get_inside_files(self, session, value, inside_folder_dir, tile_entry_id, i, chunks_to_download):
+
+        ''' Go deeper in the element tree and download contents to the specified
+           folder. This is relevant for tile specific downloads in the old file
+           structure, pre-06.12.16.'''
+
+        #
+        # Get xml link and connect to server, parsing response as a string.
+        #
+        inside_folder_link = '{}/Nodes'.format(tile_entry_id)
+        resp = session.get(inside_folder_link, stream=True)
+        inside_folder_tree = etree.fromstring(resp.content)
+
+        #
+        # Search for all entires
+        #
+        inside_folder_entries = (inside_folder_tree.findall(
+            '{http://www.w3.org/2005/Atom}entry'))
+
+        #
+        # Download each entry saving in the defined directory.
+        #
+        for inside_folder_entry in range(len(inside_folder_entries)):
+
+            inside_entry_title = (inside_folder_entries[inside_folder_entry].find(
+                '{http://www.w3.org/2005/Atom}title')).text
+            inside_entry_id = (inside_folder_entries[inside_folder_entry].find(
+                '{http://www.w3.org/2005/Atom}id')).text
+            inside_entry_file = inside_entry_title
+            inside_entry_link = '{}/{}'.format(inside_entry_id, value)
+
+            i = self.download_link(session, inside_entry_file, inside_entry_link, inside_folder_dir, i, chunks_to_download)
+
+        return i
 
 
     def unzip_result(self, target_dir, filename, zfile, title_element):
