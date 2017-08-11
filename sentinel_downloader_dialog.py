@@ -149,6 +149,11 @@ class SentinelDownloaderDialog(QtGui.QDialog, FORM_CLASS):
         self.relOrbit_radioButton.setChecked(True)
         self.relOrbit_radioButton.setAutoExclusive(True)
 
+        self.search_progressBar.setMinimum(0)
+        self.search_progressBar.reset()
+        self.download_progressBar.setMinimum(0)
+        self.download_progressBar.reset()
+
         self.btnSearchCancel.setEnabled(False)
         self.btnSearch.setEnabled(True)
 
