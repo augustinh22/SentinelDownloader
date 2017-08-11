@@ -21,7 +21,7 @@ class SentinelSearch(QObject):
     This class holds all of the search and download functionality.
     '''
 
-    geometry_check = pyqtSignal(bool)
+    query_check = pyqtSignal(str)
     finished = pyqtSignal(bool)
     finished_download = pyqtSignal(bool)
     set_message = pyqtSignal(str)
@@ -445,44 +445,41 @@ class SentinelSearch(QObject):
                 or options.lonmin is not None
                 or options.latmax is not None
                 or options.lonmax is not None)
-                and (options.lat is None or options.lon is None)):
+                and (options.lat is not None or options.lon is not None)):
 
-            self.geometry_check.emit(False)
+            self.query_check.emit('Inconsistent geometries.')
 
             return None
 
-        if options.lat is None or options.lon is None:
+        elif options.lat is not None and options.lon is not None:
 
-            if (options.latmin is None
-                    or options.lonmin is None
-                    or options.latmax is None
-                    or options.lonmax is None):
+            geom = 'point'
 
-                # message = 'Please provide at least one point or rectangle!'
-                # self.text_to_messagebox('Error.', message)
+        elif (options.latmin is not None
+                    and options.lonmin is not None
+                    and options.latmax is not None
+                    and options.lonmax is not None):
 
-                geom = None
-
-                # return None
-
-            else:
-                geom = 'rectangle'
+            geom = 'rectangle'
 
         else:
 
-            if (options.latmin is None
-                    and options.lonmin is None
-                    and options.latmax is None
-                    and options.lonmax is None):
+            geom = None
 
-                geom = 'point'
+        if geom is None and (options.lat is not None or options.lon is not None):
 
-            else:
-                # message = 'Choose either a point or rectangle, not both!'
-                # self.text_to_messagebox('Error.', message)
+            self.query_check.emit('Incomplete point.')
 
-                geom = None
-                # return None
+            return None
+
+        elif geom is None and (options.latmin is not None
+                or options.lonmin is not None
+                or options.latmax is not None
+                or options.lonmax is not None):
+
+            self.query_check.emit('Incomplete polygon.')
+
+            return None
 
         #
         # Instantiate query string.
@@ -693,6 +690,11 @@ class SentinelSearch(QObject):
 
             query = query[5:]
 
+        if query == '' or query is None:
+
+            self.query_check.emit('No Parameters.')
+
+            return None
         #
         # Create query string.
         #
@@ -778,8 +780,8 @@ class SentinelSearch(QObject):
                     ).format(options.sentinel)
 
                 self.text_to_messagebox('Error', message)
-                # self.enable_btnSearch.emit()
-                # return
+                self.enable_btnSearch.emit()
+                return
 
             if options.user is None or options.password is None:
 
@@ -788,16 +790,18 @@ class SentinelSearch(QObject):
                 self.enable_btnSearch.emit()
                 return
 
-            #
-            # Create authenticated http session.
-            #
-            self.start_session(options)
-
             query = self.create_query(options)
 
             if query is None:
 
+                self.finished.emit(True)
+
                 return None
+
+            #
+            # Create authenticated http session.
+            #
+            self.start_session(options)
 
             tW1 = self.dlg.s1Results_tableWidget
             tW2 = self.dlg.s2Results_tableWidget
@@ -1957,7 +1961,7 @@ class SentinelSearch(QObject):
 #
 # Ultimately this exists to create an empty namespace similar to the output of
 # optparse or argparse to keep from having to change much code from before.
-# Should eventually switch to a dictionary.
+# TODO: Switch over to a dictionary.
 #
 class Namespace(object):
 
