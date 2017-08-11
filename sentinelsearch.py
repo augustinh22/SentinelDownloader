@@ -385,6 +385,13 @@ class SentinelSearch(QObject):
                 r = s.get(api_request)
 
                 #
+                # TODO: This needs beter exception handling.
+                #
+                if r.status_code != 200:
+
+                    r.raise_for_status()
+
+                #
                 # Read string result as a dictionary.
                 #
                 result = {}
@@ -405,10 +412,11 @@ class SentinelSearch(QObject):
 
             coords = [result["data"]["x"], result["data"]["y"]]
 
-        else:
-            return 'API failed.'
+            return coords
 
-        return coords
+        else:
+
+            return 'API failed.'
 
     def create_query(self, options, huburl, maxrecords):
 
