@@ -59,7 +59,7 @@
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>3</number>
      </property>
      <widget class="QWidget" name="login_tab">
       <property name="sizePolicy">
@@ -2184,8 +2184,8 @@ background-color: rgba(85, 170, 0, 180);</string>
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>100</width>
-            <height>30</height>
+            <width>98</width>
+            <height>28</height>
            </rect>
           </property>
           <attribute name="label">
@@ -2276,7 +2276,7 @@ background-color: rgba(85, 170, 0, 180);</string>
             <x>0</x>
             <y>0</y>
             <width>680</width>
-            <height>344</height>
+            <height>343</height>
            </rect>
           </property>
           <attribute name="label">
@@ -2445,11 +2445,11 @@ background-color: rgba(85, 170, 0, 180);</string>
           <bool>true</bool>
          </property>
          <property name="plainText">
-          <string>QGIS Plugin designed by Hannah Augustin (hannah.augustin@stud.sbg.ac.at)
+          <string>This plugin requires Python packages Numpy, Scipy, GDAL, and requests, all of which come automatically installed with QGIS.
 
-This plugin requires Python packages Numpy, Scipy, GDAL, and requests, all of which come automatically installed with QGIS, as well as the downloading agent, aria2, to manage downloads.
+All users need to have an account for a valid Sentinel data hub. Copernicus Open Access Hub (https://scihub.copernicus.eu) accounts need to be at least 1 week old before the API hub can be used to search for images. Until then, the dhus access point may be used, which can return only 10 records at a time instead of the API hub's maximum of 100 records. If the API hub is undergoing maintenaince, the dhus access point often still works.
 
-All users need to have an account for the Copernicus Open Access Hub (https://scihub.copernicus.eu). Accounts need to be at least 1 week old before the API hub can be used to search for images. Until then, the dhus access point may be used, which can return only 10 records at a time instead of the API hub's maximum of 100 records. If the API hub is undergoing maintenaince, the dhus access point often still works.</string>
+Other hubs whose access has also been implemented includ the Austrian National Mirror from ZAMG and the Greek National Mirror (HNSDMS).</string>
          </property>
         </widget>
        </item>
