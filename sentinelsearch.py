@@ -181,9 +181,13 @@ class SentinelSearch(QObject):
         # Directory to save data.
         #
         if self.dlg.writeDir_txtPath.text() != '':
+
             options.write_dir = self.dlg.writeDir_txtPath.text()
+
         else:
+
             options.write_dir = None
+
 
         #
         # Maximum record number (max. 100 for API hub, 10 for dhus).
@@ -732,6 +736,7 @@ class SentinelSearch(QObject):
         # Authorize ESA API or DataHub Credentials
         #
         if options.user is not None and options.password is not None:
+
             account = options.user
             passwd = options.password
 
@@ -767,335 +772,326 @@ class SentinelSearch(QObject):
         This function retrieves an xml result from the query to the hub.
         '''
 
+        options = self.get_arguments()
+
+        if (options.tile is not None
+                and options.sentinel != 'S2'
+                and options.sentinel != 'S2A'
+                and options.sentinel != 'S2B'):
+
+            self.query_check.emit('Tile extraction error')
+            self.finished.emit(True)
+
+            return
+
+        if options.user is None or options.password is None:
+
+            self.query_check.emit('Missing authorization credentials.')
+            self.finished.emit(True)
+
+            return
+
+        query = self.create_query(options)
+
+        if query is None:
+
+            self.finished.emit(True)
+
+            return
+
+        #
+        # Create authenticated http session.
+        #
+        self.start_session(options)
+
+        tW1 = self.dlg.s1Results_tableWidget
+        tW2 = self.dlg.s2Results_tableWidget
+
+        # TODO: add loop to accomodate larger queries of more than 100
+        # records, where start is updated. Max rows are hardcoded or
+        # modified to smallernumbers already in create_query().
+
+        #
+        # Create GET request from hub and parse it.
+        #
         try:
-            options = self.get_arguments()
 
-            if (options.tile is not None
-                    and options.sentinel != 'S2'
-                    and options.sentinel != 'S2A'
-                    and options.sentinel != 'S2B'):
+            response = self.session.get(query, stream=True, timeout=5)
 
-                message = (
-                    'Tile extraction option can only be used for {}!'
-                    ).format(options.sentinel)
+        except (requests.HTTPError,
+                requests.ConnectionError,
+                requests.Timeout) as e:
 
-                self.text_to_messagebox('Error', message)
-                self.enable_btnSearch.emit()
-                return
+            self.query_check.emit(str(e))
+            self.session.close()
+            self.finished.emit(True)
 
-            if options.user is None or options.password is None:
+            return
 
-                message = 'Please enter a username and password!'
-                self.text_to_messagebox('Error', message)
-                self.enable_btnSearch.emit()
-                return
 
-            query = self.create_query(options)
+        query_tree = etree.fromstring(response.content)
 
-            if query is None:
+        entries = query_tree.findall('{http://www.w3.org/2005/Atom}entry')
 
-                self.finished.emit(True)
+        #
+        # Create progress bar with maximum as the number of entries.
+        #
+        self.search_progress_max.emit(len(entries))
+        self.searching_message.emit('Searching . . .')
 
-                return None
+        #
+        # Set a counter to reference the progress.
+        #
+        i = 0
+
+        for entry in range(len(entries)):
+
+            if self.killed is True:
+                # kill request received, exit loop early.
+                break
+            #
+            # Update progress bar.
+            #
+            i = i + 1
+            percent = int((i/float(len(entries))) * 100)
+            self.search_progress_set.emit(percent)
 
             #
-            # Create authenticated http session.
+            # The UUID element is unique for each record and the key
+            # ingredient for creating the path to the file.
             #
-            self.start_session(options)
-
-            tW1 = self.dlg.s1Results_tableWidget
-            tW2 = self.dlg.s2Results_tableWidget
-
-            # TODO: add loop to accomodate larger queries of more than 100
-            # records, where start is updated. Max rows are hardcoded or
-            # modified to smallernumbers already in create_query().
+            uuid_element = (entries[entry].find(
+                '{http://www.w3.org/2005/Atom}id')).text
+            title_element = (entries[entry].find(
+                '{http://www.w3.org/2005/Atom}title')).text
 
             #
-            # Create GET request from hub and parse it.
+            # Check both tables for UUID and filename.
+            # Skip if already in either table.
             #
-            try:
-                response = self.session.get(query, stream=True)
-                query_tree = etree.fromstring(response.content)
-
-            except:
-
-                message = (
-                    'Error with connection.\n'
-                    'Please check credentials, try another hub or try again '
-                    'later.')
-
-                self.text_to_messagebox('Error', message)
-                self.enable_btnSearch.emit()
-
-                return
-
-            entries = query_tree.findall('{http://www.w3.org/2005/Atom}entry')
-
-            #
-            # Create progress bar with maximum as the number of entries.
-            #
-            self.search_progress_max.emit(len(entries))
-            self.searching_message.emit('Searching . . .')
-
-            #
-            # Set a counter to reference the progress.
-            #
-            i = 0
-
-            for entry in range(len(entries)):
-
-                if self.killed is True:
-                    # kill request received, exit loop early.
-                    break
-                #
-                # Update progress bar.
-                #
-                i = i + 1
-                percent = int((i/float(len(entries))) * 100)
-                self.search_progress_set.emit(percent)
+            tW1_UUIDs = []
+            tW1_fns = []
+            tW1Rows = tW1.rowCount()
+            for row in xrange(0, tW1Rows):
 
                 #
-                # The UUID element is unique for each record and the key
-                # ingredient for creating the path to the file.
+                # Try loop to avoid when UUID is None (Database issue)
                 #
-                uuid_element = (entries[entry].find(
-                    '{http://www.w3.org/2005/Atom}id')).text
-                title_element = (entries[entry].find(
-                    '{http://www.w3.org/2005/Atom}title')).text
+                try:
+                    tw1_col11 = tW1.item(row, 11).text()
+                    tW1_UUIDs.append(tw1_col11)
+
+                    tw1_col0 = tW1.item(row, 0).text()
+                    tW1_fns.append(tw1_col0)
+
+                except:
+                    # This seems to happen, if UUID is None.
+                    pass
+
+            tW2_UUIDs = []
+            tW2_fns = []
+            tW2Rows = tW2.rowCount()
+            for row in xrange(0, tW2Rows):
 
                 #
-                # Check both tables for UUID and filename.
-                # Skip if already in either table.
+                # Try loop to avoid when UUID is None (Database issue)
                 #
-                tW1_UUIDs = []
-                tW1_fns = []
-                tW1Rows = tW1.rowCount()
-                for row in xrange(0, tW1Rows):
+                try:
+                    tw2_col11 = tW2.item(row, 11).text()
+                    tW2_UUIDs.append(tw2_col11)
 
-                    #
-                    # Try loop to avoid when UUID is None (Database issue)
-                    #
+                    tw2_col0 = tW2.item(row, 0).text()
+                    tW2_fns.append(tw2_col0)
+
+                except:
+                    # This seems to happen, if UUID is None.
+                    pass
+
+            if uuid_element in tW2_UUIDs or uuid_element in tW1_UUIDs:
+
+                continue
+
+            elif title_element in tW2_fns or title_element in tW1_fns:
+
+                continue
+
+            elif uuid_element is None or title_element is None:
+
+                continue
+            #
+            # If UUID and titel not in one of the tables, add record
+            # to respective table.
+            #
+            else:
+
+                #
+                # The title element contains the corresponding file name.
+                #
+                filename = (entries[entry].find(
+                    './/*[@name="filename"]')).text
+                size_element = (entries[entry].find(
+                    './/*[@name="size"]')).text
+                rel_orbit = int((entries[entry].find(
+                    './/*[@name="relativeorbitnumber"]')).text)
+                footprint = (entries[entry].find(
+                    './/*[@name="footprint"]')).text
+                sensing_date = ((entries[entry].find(
+                    './/*[@name="beginposition"]')).text)[:10]
+                sentinel_link = ("{}odata/v1/Products('{}')/{}").format(
+                    options.huburl, uuid_element, self.value)
+
+                footprint = footprint.replace(
+                    'POLYGON ((', "").replace('))', "").split(',')
+
+                xList = []
+                yList = []
+
+                for coords in footprint:
+
+                    xList.append(float(coords.split(' ')[0]))
+                    yList.append(float(coords.split(' ')[1]))
+
+                lonmin = float('{0:.2f}'.format(min(xList)))
+                lonmax = float('{0:.2f}'.format(max(xList)))
+                latmin = float('{0:.2f}'.format(min(yList)))
+                latmax = float('{0:.2f}'.format(max(yList)))
+
+                if filename.startswith('S1'):
+
                     try:
-                        tw1_col11 = tW1.item(row, 11).text()
-                        tW1_UUIDs.append(tw1_col11)
 
-                        tw1_col0 = tW1.item(row, 0).text()
-                        tW1_fns.append(tw1_col0)
+                        s1Product = (entries[entry].find(
+                            './/*[@name="producttype"]')).text
 
                     except:
-                        # This seems to happen, if UUID is None.
-                        pass
 
-                tW2_UUIDs = []
-                tW2_fns = []
-                tW2Rows = tW2.rowCount()
-                for row in xrange(0, tW2Rows):
+                        s1Product = '---'
 
-                    #
-                    # Try loop to avoid when UUID is None (Database issue)
-                    #
                     try:
-                        tw2_col11 = tW2.item(row, 11).text()
-                        tW2_UUIDs.append(tw2_col11)
 
-                        tw2_col0 = tW2.item(row, 0).text()
-                        tW2_fns.append(tw2_col0)
+                        s1Polar = (entries[entry].find(
+                            './/*[@name="polarisationmode"]')).text
 
                     except:
-                        # This seems to happen, if UUID is None.
-                        pass
 
-                if uuid_element in tW2_UUIDs or uuid_element in tW1_UUIDs:
+                        s1Polar = '---'
 
-                    continue
+                    try:
 
-                elif title_element in tW2_fns or title_element in tW1_fns:
+                        s1Mode = (entries[entry].find(
+                            './/*[@name="sensoroperationalmode"]')).text
 
-                    continue
+                    except:
 
-                elif uuid_element is None or title_element is None:
-
-                    continue
-                #
-                # If UUID and titel not in one of the tables, add record
-                # to respective table.
-                #
-                else:
+                        s1Mode = '---'
 
                     #
-                    # The title element contains the corresponding file name.
+                    # Add items to S1 table.
                     #
-                    filename = (entries[entry].find(
-                        './/*[@name="filename"]')).text
-                    size_element = (entries[entry].find(
-                        './/*[@name="size"]')).text
-                    rel_orbit = int((entries[entry].find(
-                        './/*[@name="relativeorbitnumber"]')).text)
-                    footprint = (entries[entry].find(
-                        './/*[@name="footprint"]')).text
-                    sensing_date = ((entries[entry].find(
-                        './/*[@name="beginposition"]')).text)[:10]
-                    sentinel_link = ("{}odata/v1/Products('{}')/{}").format(
-                        options.huburl, uuid_element, self.value)
+                    c = tW1.rowCount()
+                    tW1.setRowCount(c + 1)
+                    self.add_to_table(tW1, title_element, c, 0)
+                    self.add_to_table(tW1, s1Product, c, 1)
+                    self.add_to_table(tW1, s1Polar, c, 2)
+                    self.add_to_table(tW1, s1Mode, c, 3)
+                    self.add_to_table(tW1, sensing_date, c, 4)
+                    self.add_to_table(tW1, rel_orbit, c, 5)
+                    self.add_to_table(tW1, size_element, c, 6)
+                    self.add_to_table(tW1, latmin, c, 7)
+                    self.add_to_table(tW1, latmax, c, 8)
+                    self.add_to_table(tW1, lonmin, c, 9)
+                    self.add_to_table(tW1, lonmax, c, 10)
+                    self.add_to_table(tW1, uuid_element, c, 11)
+                    self.add_to_table(tW1, sentinel_link, c, 12)
 
-                    footprint = footprint.replace(
-                        'POLYGON ((', "").replace('))', "").split(',')
+                elif filename.startswith('S2'):
 
-                    xList = []
-                    yList = []
+                    try:
 
-                    for coords in footprint:
+                        cloud_element = (entries[entry].find(
+                            './/*[@name="cloudcoverpercentage"]')).text
+                        cloud_element = float(
+                            '{0:.1f}'.format(float(cloud_element)))
 
-                        xList.append(float(coords.split(' ')[0]))
-                        yList.append(float(coords.split(' ')[1]))
+                    except:
 
-                    lonmin = float('{0:.2f}'.format(min(xList)))
-                    lonmax = float('{0:.2f}'.format(max(xList)))
-                    latmin = float('{0:.2f}'.format(min(yList)))
-                    latmax = float('{0:.2f}'.format(max(yList)))
+                        cloud_element = '---'
 
-                    if filename.startswith('S1'):
-
-                        try:
-
-                            s1Product = (entries[entry].find(
-                                './/*[@name="producttype"]')).text
-
-                        except:
-
-                            s1Product = '---'
+                    #
+                    # Return tile names per entry using function
+                    # return_tiles if desired.
+                    #
+                    if filename.startswith('S2A_OPER_'):
 
                         try:
 
-                            s1Polar = (entries[entry].find(
-                                './/*[@name="polarisationmode"]')).text
+                            found_tiles = self.return_tiles(
+                                uuid_element, filename, options.huburl)
+
+                            #
+                            # Print the number of tiles and their names.
+                            #
+                            numGranules = str(len(found_tiles[0]))
+                            granules = found_tiles[1]
 
                         except:
-
-                            s1Polar = '---'
-
-                        try:
-
-                            s1Mode = (entries[entry].find(
-                                './/*[@name="sensoroperationalmode"]')).text
-
-                        except:
-
-                            s1Mode = '---'
-
-                        #
-                        # Add items to S1 table.
-                        #
-                        c = tW1.rowCount()
-                        tW1.setRowCount(c + 1)
-                        self.add_to_table(tW1, title_element, c, 0)
-                        self.add_to_table(tW1, s1Product, c, 1)
-                        self.add_to_table(tW1, s1Polar, c, 2)
-                        self.add_to_table(tW1, s1Mode, c, 3)
-                        self.add_to_table(tW1, sensing_date, c, 4)
-                        self.add_to_table(tW1, rel_orbit, c, 5)
-                        self.add_to_table(tW1, size_element, c, 6)
-                        self.add_to_table(tW1, latmin, c, 7)
-                        self.add_to_table(tW1, latmax, c, 8)
-                        self.add_to_table(tW1, lonmin, c, 9)
-                        self.add_to_table(tW1, lonmax, c, 10)
-                        self.add_to_table(tW1, uuid_element, c, 11)
-                        self.add_to_table(tW1, sentinel_link, c, 12)
-
-                    elif filename.startswith('S2'):
-
-                        try:
-
-                            cloud_element = (entries[entry].find(
-                                './/*[@name="cloudcoverpercentage"]')).text
-                            cloud_element = float(
-                                '{0:.1f}'.format(float(cloud_element)))
-
-                        except:
-
-                            cloud_element = '---'
-
-                        #
-                        # Return tile names per entry using function
-                        # return_tiles if desired.
-                        #
-                        if filename.startswith('S2A_OPER_'):
-
-                            try:
-
-                                found_tiles = self.return_tiles(
-                                    uuid_element, filename, options.huburl)
-
-                                #
-                                # Print the number of tiles and their names.
-                                #
-                                numGranules = str(len(found_tiles[0]))
-                                granules = found_tiles[1]
-
-                            except:
-
-                                numGranules = '---'
-                                granules = '---'
-
-                        elif (filename.startswith('S2A_MSIL1C_')
-                                or filename.startswith('S2A_MSIL2A_')
-                                or filename.startswith('S2B_MSIL1C_')
-                                or filename.startswith('S2B_MSIL2A_')):
-
-                            try:
-
-                                numGranules = 1
-                                granules = (entries[entry].find(
-                                    './/*[@name="tileid"]')).text
-
-                            except:
-
-                                numGranules = 1
-                                granules = filename[-26:-21]
-
-                        else:
 
                             numGranules = '---'
                             granules = '---'
 
-                        if (options.tile is not None
-                                and options.tile not in granules):
+                    elif (filename.startswith('S2A_MSIL1C_')
+                            or filename.startswith('S2A_MSIL2A_')
+                            or filename.startswith('S2B_MSIL1C_')
+                            or filename.startswith('S2B_MSIL2A_')):
 
-                            pass
+                        try:
 
-                        else:
+                            numGranules = 1
+                            granules = (entries[entry].find(
+                                './/*[@name="tileid"]')).text
 
-                            #
-                            # Add items to S2 table.
-                            #
-                            c = tW2.rowCount()
-                            tW2.setRowCount(c + 1)
-                            self.add_to_table(tW2, title_element, c, 0)
-                            self.add_to_table(tW2, granules, c, 1)
-                            self.add_to_table(tW2, numGranules, c, 2)
-                            self.add_to_table(tW2, cloud_element, c, 3)
-                            self.add_to_table(tW2, sensing_date, c, 4)
-                            self.add_to_table(tW2, rel_orbit, c, 5)
-                            self.add_to_table(tW2, size_element, c, 6)
-                            self.add_to_table(tW2, latmin, c, 7)
-                            self.add_to_table(tW2, latmax, c, 8)
-                            self.add_to_table(tW2, lonmin, c, 9)
-                            self.add_to_table(tW2, lonmax, c, 10)
-                            self.add_to_table(tW2, uuid_element, c, 11)
-                            self.add_to_table(tW2, sentinel_link, c, 12)
+                        except:
 
-            total_size = self.return_total_size(tW1, tW2)
-            # self.text_to_messagebox(
-            #    'Results.', 'Total size of results: {}'.format(total_size))
-            size_message = 'Total size of results: {}'.format(total_size)
-            self.set_message.emit(size_message)
-            self.session.close()
+                            numGranules = 1
+                            granules = filename[-26:-21]
 
-        except Exception, e:
+                    else:
 
-            # forward the exception upstream
-            self.error.emit(e, traceback.format_exc())
+                        numGranules = '---'
+                        granules = '---'
 
+                    if (options.tile is not None
+                            and options.tile not in granules):
+
+                        pass
+
+                    else:
+
+                        #
+                        # Add items to S2 table.
+                        #
+                        c = tW2.rowCount()
+                        tW2.setRowCount(c + 1)
+                        self.add_to_table(tW2, title_element, c, 0)
+                        self.add_to_table(tW2, granules, c, 1)
+                        self.add_to_table(tW2, numGranules, c, 2)
+                        self.add_to_table(tW2, cloud_element, c, 3)
+                        self.add_to_table(tW2, sensing_date, c, 4)
+                        self.add_to_table(tW2, rel_orbit, c, 5)
+                        self.add_to_table(tW2, size_element, c, 6)
+                        self.add_to_table(tW2, latmin, c, 7)
+                        self.add_to_table(tW2, latmax, c, 8)
+                        self.add_to_table(tW2, lonmin, c, 9)
+                        self.add_to_table(tW2, lonmax, c, 10)
+                        self.add_to_table(tW2, uuid_element, c, 11)
+                        self.add_to_table(tW2, sentinel_link, c, 12)
+
+        total_size = self.return_total_size(tW1, tW2)
+        # self.text_to_messagebox(
+        #    'Results.', 'Total size of results: {}'.format(total_size))
+        size_message = 'Total size of results: {}'.format(total_size)
+        self.set_message.emit(size_message)
+        self.session.close()
         self.finished.emit(self.killed)
 
     @staticmethod
@@ -1292,6 +1288,20 @@ class SentinelSearch(QObject):
 
         options = self.get_arguments()
 
+        if options.user is None or options.password is None:
+
+            self.query_check.emit('Missing authorization credentials.')
+            self.finished_download.emit(True)
+
+            return
+
+        if options.write_dir is None:
+
+            self.query_check.emit('No write directory.')
+            self.finished_download.emit(True)
+
+            return
+
         #
         # Create download directory if it doesn't yet exist.
         #
@@ -1309,14 +1319,8 @@ class SentinelSearch(QObject):
             pass
 
         elif options.write_dir is not None:
-            options.write_dir = (options.write_dir).replace('/', '\\')
 
-        elif options.write_dir is None:
-            message = 'Please enter a directory to download the data to!'
-            self.text_to_messagebox('Error', message)
-            return None
-        else:
-            pass
+            options.write_dir = (options.write_dir).replace('/', '\\')
 
         #
         # Create authenticated http session.
@@ -1330,6 +1334,13 @@ class SentinelSearch(QObject):
         tW2 = self.dlg.s2Results_tableWidget
         tW1Rows = tW1.rowCount()
         tW2Rows = tW2.rowCount()
+
+        if tW1Rows + tW2Rows == 0:
+
+            self.query_check.emit('Nothing to download!')
+            self.finished_download.emit(True)
+
+            return
 
         self.download_progress_max.emit(tW1Rows + tW2Rows)
         self.download_message.emit('Downloading . . .')

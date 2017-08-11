@@ -350,11 +350,45 @@ class SentinelDownloader:
             self.text_to_messagebox(
                 header, 'Polygon is missing at least one coordinate value.')
 
-        elif header == 'No Parameters.':
+        elif header == 'No parameters.':
 
             self.text_to_messagebox(
                 header, 'Please enter at least one parameter.')
 
+        elif header == 'Missing authorization credentials.':
+
+            self.text_to_messagebox(header,
+                'Please enter both a username and password.')
+
+        elif header == 'Tile extraction error':
+
+            self.text_to_messagebox(header,
+                'Tile extraction option can only be used for Sentinel-2')
+
+        elif header == 'Error with connection.':
+
+            message = (
+                'Error with connection.\n'
+                'Please check credentials, try another hub or try again '
+                'later.')
+
+            self.text_to_messagebox(header, message)
+
+        elif header == 'Error with hub.':
+
+            message = (
+                'Error with connection.\n'
+                'Please try another hub or try again later.')
+
+            self.text_to_messagebox(header, message)
+
+        elif header == 'No write directory.':
+
+            self.text_to_messagebox(header,
+                'Please enter a directory to download the data to!')
+
+        else:
+            self.text_to_messagebox('Error.', header)
 
     def set_search_label(self, text):
 
@@ -394,13 +428,6 @@ class SentinelDownloader:
 
     def search_finished(self, killed=False):
 
-        #
-        # Clear progress bar widget and label.
-        #
-        self.dlg.search_progressBar.reset()
-        self.dlg.search_progressBar.setMinimum(0)
-        self.set_search_label('')
-
         if killed is False:
 
             self.text_to_messagebox('Done!', 'Done fetching search results!')
@@ -417,6 +444,14 @@ class SentinelDownloader:
         #
         self.dlg.btnSearch.setEnabled(True)
         self.dlg.btnSearchCancel.setEnabled(False)
+
+        #
+        # Clear progress bar widget and label.
+        #
+        self.dlg.search_progressBar.setMinimum(0)
+        self.dlg.search_progressBar.setMaximum(100)
+        self.dlg.search_progressBar.reset()
+        self.set_search_label('')
 
     def kill(self):
 
@@ -498,6 +533,7 @@ class SentinelDownloader:
 
         self.threadD.start()
         self.threadD.started.connect(self.workerD.download_results)
+        self.workerD.query_check.connect(self.query_search_check)
         self.workerD.download_progress_set.connect(self.set_download_progress)
         self.workerD.download_message.connect(self.set_download_label)
         self.workerD.connecting_message.connect(self.set_download_label)
@@ -570,8 +606,9 @@ class SentinelDownloader:
         #
         # Clear progress bar widget and label.
         #
-        self.dlg.download_progressBar.reset()
         self.dlg.download_progressBar.setMinimum(0)
+        self.dlg.download_progressBar.setMaximum(100)
+        self.dlg.download_progressBar.reset()
         self.dlg.download_label.setText('')
 
     @staticmethod
