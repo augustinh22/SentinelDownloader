@@ -21,6 +21,7 @@ class SentinelSearch(QObject):
     This class holds all of the search and download functionality.
     '''
 
+    geometry_check = pyqtSignal(bool)
     finished = pyqtSignal(bool)
     finished_download = pyqtSignal(bool)
     set_message = pyqtSignal(str)
@@ -40,6 +41,7 @@ class SentinelSearch(QObject):
         self.value = self.set_value()
         self.session = None
         self.fileDialog = None
+        self.maxrecords = None
 
     def open(self):
 
@@ -68,16 +70,28 @@ class SentinelSearch(QObject):
         #
         if self.dlg.hub_comboBox.currentText() == 'API Hub':
             options.hub = 'apihub'
+            options.huburl = 'https://scihub.copernicus.eu/apihub/'
+            self.maxrecords = 100
         elif self.dlg.hub_comboBox.currentText() == 'Dhus':
             options.hub = 'dhus'
+            options.huburl = 'https://scihub.copernicus.eu/dhus/'
+            self.maxrecords = 10
         elif self.dlg.hub_comboBox.currentText() == 'ZAMG':
             options.hub = 'zamg'
+            options.huburl = 'https://data.sentinel.zamg.ac.at/'
+            self.maxrecords = 100
         elif self.dlg.hub_comboBox.currentText() == 'HNSDMS':
             options.hub = 'hnsdms'
+            options.huburl = 'https://sentinels.space.noa.gr/dhus/'
+            self.maxrecords = 100
         # elif self.dlg.hub_comboBox.currentText() == 'Finhub':
         #     options.hub = 'finhub'
+        #     options.huburl = 'https://finhub.nsdc.fmi.fi/odata/'
+        #     self.maxrecords = 100
         else:
             options.hub = None
+            options.huburl = None
+            self.maxrecords = None
 
         #
         # Define which sensor should be queried.
@@ -418,7 +432,7 @@ class SentinelSearch(QObject):
 
             return 'API failed.'
 
-    def create_query(self, options, huburl, maxrecords):
+    def create_query(self, options):
 
         '''
         Creates a query string for the data hub based on GUI input.
@@ -427,6 +441,16 @@ class SentinelSearch(QObject):
         #
         # Build in checks for valid commands related to the spatial aspect.
         #
+        if ((options.latmin is not None
+                or options.lonmin is not None
+                or options.latmax is not None
+                or options.lonmax is not None)
+                and (options.lat is None or options.lon is None)):
+
+            self.geometry_check.emit(False)
+
+            return None
+
         if options.lat is None or options.lon is None:
 
             if (options.latmin is None
@@ -656,11 +680,11 @@ class SentinelSearch(QObject):
         #
         # Set rows to number of maxrecords or less, if query is smaller.
         #
-        if int(options.max_records) <= maxrecords:
+        if int(options.max_records) <= self.maxrecords:
 
-            maxrecords = options.max_records
+            self.maxrecords = options.max_records
         else:
-            maxrecords = str(maxrecords)
+            self.maxrecords = str(self.maxrecords)
 
         #
         # Correct query string if no geographic coordinates are given.
@@ -675,12 +699,12 @@ class SentinelSearch(QObject):
         if orderby is not None:
 
             query = '{}search?q=({})&rows={}&{}'.format(
-                huburl, query, maxrecords, orderby)
+                options.huburl, query, self.maxrecords, orderby)
 
         else:
 
             query = '{}search?q=({})&rows={}'.format(
-                huburl, query, maxrecords)
+                options.huburl, query, self.maxrecords)
 
         #
         # Print arguments to message box for test.
@@ -703,33 +727,6 @@ class SentinelSearch(QObject):
         self.connecting_message.emit('Connecting . . .')
 
         #
-        # Set data source (apihub vs dhus -- more could be added).
-        #
-        if options.hub == 'apihub':
-            huburl = 'https://scihub.copernicus.eu/apihub/'
-            maxrecords = 100
-
-        elif options.hub == 'dhus':
-            huburl = 'https://scihub.copernicus.eu/dhus/'
-            maxrecords = 10
-
-        elif options.hub == 'zamg':
-            huburl = 'https://data.sentinel.zamg.ac.at/'
-            maxrecords = 100
-
-        elif options.hub == 'hnsdms':
-            huburl = 'https://sentinels.space.noa.gr/dhus/'
-            maxrecords = 100
-
-        # elif options.hub == 'finhub':
-        #     huburl = 'https://finhub.nsdc.fmi.fi/odata/'
-        #     maxrecords = 100
-
-        else:
-            huburl = None
-            maxrecords = None
-
-        #
         # Authorize ESA API or DataHub Credentials
         #
         if options.user is not None and options.password is not None:
@@ -745,8 +742,6 @@ class SentinelSearch(QObject):
         #
         self.session = requests.Session()
         self.session.auth = (account, passwd)
-
-        return huburl, maxrecords
 
     def set_value(self):
 
@@ -796,10 +791,9 @@ class SentinelSearch(QObject):
             #
             # Create authenticated http session.
             #
-            huburl, maxrecords = self.start_session(
-                options)
+            self.start_session(options)
 
-            query = self.create_query(options, huburl, maxrecords)
+            query = self.create_query(options)
 
             if query is None:
 
@@ -938,7 +932,7 @@ class SentinelSearch(QObject):
                     sensing_date = ((entries[entry].find(
                         './/*[@name="beginposition"]')).text)[:10]
                     sentinel_link = ("{}odata/v1/Products('{}')/{}").format(
-                        huburl, uuid_element, self.value)
+                        options.huburl, uuid_element, self.value)
 
                     footprint = footprint.replace(
                         'POLYGON ((', "").replace('))', "").split(',')
@@ -1026,7 +1020,7 @@ class SentinelSearch(QObject):
                             try:
 
                                 found_tiles = self.return_tiles(
-                                    uuid_element, filename, huburl)
+                                    uuid_element, filename, options.huburl)
 
                                 #
                                 # Print the number of tiles and their names.
@@ -1323,8 +1317,7 @@ class SentinelSearch(QObject):
         #
         # Create authenticated http session.
         #
-        huburl, maxrecords = self.start_session(
-            options)
+        self.start_session(options)
 
         #
         # Define data tables for S1 and S2 results.
@@ -1460,7 +1453,7 @@ class SentinelSearch(QObject):
                     #
                     sentinel_link = (
                         "{}odata/v1/Products('{}')/Nodes('{}')/Nodes").format(
-                            huburl, uuid_element, filename)
+                            options.huburl, uuid_element, filename)
 
                     #
                     # Skip files that have already been downloaded.
@@ -1486,7 +1479,7 @@ class SentinelSearch(QObject):
                     # Create tile dir in GRANULE dir based on tile file name.
                     #
                     tile_file = self.return_tiles(
-                        uuid_element, filename, huburl, options.tile)
+                        uuid_element, filename, options.huburl, options.tile)
 
                     #
                     # If tile folder already exists, then it skips downloading.
@@ -1513,7 +1506,7 @@ class SentinelSearch(QObject):
                     # Download the product header file after finding the name
                     #
                     header_file = self.return_header(
-                        huburl, uuid_element, filename)
+                        options.huburl, uuid_element, filename)
                     header_link = "{}('{}')/{}".format(
                         sentinel_link, header_file, self.value)
                     i = self.download_link(
@@ -1558,7 +1551,7 @@ class SentinelSearch(QObject):
                     #
 
                     i = self.get_tile_files(
-                        huburl, uuid_element, filename,
+                        options.huburl, uuid_element, filename,
                         tile_file, tile_dir, i, chunks_to_download)
 
                     # print 'Downloaded tile {} from scene #{}\n'.format(
@@ -1980,6 +1973,7 @@ class Namespace(object):
         self.user = None
         self.password = None
         self.hub = None
+        self.huburl = None
         self.sentinel = None
         self.orderby = None
         self.latmin = None
