@@ -325,6 +325,7 @@ class SentinelDownloader:
         #
         # Signal handelling from thread.
         #
+        self.worker.query_check.connect(self.query_search_check)
         self.worker.connecting_message.connect(self.set_search_label)
         self.worker.searching_message.connect(self.set_search_label)
         self.worker.enable_btnSearch.connect(self.enable_btnSearch)
@@ -332,6 +333,28 @@ class SentinelDownloader:
         self.worker.search_progress_set.connect(self.set_progress)
         self.worker.set_message.connect(self.set_messageBar)
         self.worker.finished.connect(self.search_finished)
+
+    def query_search_check(self, header):
+
+        if header == 'Inconsistent geometries.':
+            self.text_to_messagebox(
+                header, 'Pick one polygon, point or no geometry.')
+
+        elif header == 'Incomplete point.':
+
+            self.text_to_messagebox(
+                header, 'Point is missing one coordinate value.')
+
+        elif header == 'Incomplete polygon.':
+
+            self.text_to_messagebox(
+                header, 'Polygon is missing at least one coordinate value.')
+
+        elif header == 'No Parameters.':
+
+            self.text_to_messagebox(
+                header, 'Please enter at least one parameter.')
+
 
     def set_search_label(self, text):
 
